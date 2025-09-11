@@ -1,0 +1,147 @@
+---
+title: "FinetuningConfig"
+description: "API reference for finetuning configuration"
+---
+
+## FinetuningConfig
+
+<ParamField path="base_model_path" type="str" required>
+  Path to the pre-trained model checkpoint or Hugging Face model identifier to finetune from.
+</ParamField>
+
+<ParamField path="data_configs" type="FinetuningDataConfig | List[FinetuningDataConfig]" required>
+  Data configuration(s) for finetuning tasks. Supports multi-task finetuning scenarios.
+</ParamField>
+
+<ParamField path="finetuning_config" type="FinetuningOptimizationConfig" required>
+  Finetuning-specific optimization parameters with typically lower learning rates.
+</ParamField>
+
+<ParamField path="model_config" type="ModelConfig" required>
+  Model architecture configuration. Must match the base model architecture.
+</ParamField>
+
+<ParamField path="meta_config" type="MetaConfig" default="Uses MetaConfig defaults">
+  Metadata and run-specific parameters for the finetuning experiment.
+</ParamField>
+
+## FinetuningOptimizationConfig
+
+<ParamField path="total_training_steps" type="int" required>
+  Total number of finetuning steps. Typically much lower than full training (500-5000 steps).
+</ParamField>
+
+<ParamField path="max_learning_rate" type="float" required>
+  Maximum learning rate for finetuning. Recommended range: 1e-5 to 5e-4 (lower than full training).
+</ParamField>
+
+<ParamField path="global_batch_size" type="int" required>
+  Global batch size for finetuning. Can be smaller than full training due to fewer steps.
+</ParamField>
+
+<ParamField path="learning_rate_schedule" type="str | callable" default="linear">
+  Learning rate scheduling strategy for finetuning:
+  - `"linear"`: Linear decay (recommended for finetuning)
+  - `"cosine"`: Cosine annealing
+  - `"constant"`: Constant learning rate
+  - Custom function with signature: `(learning_rate, current_step, total_steps) → decayed_rate`
+</ParamField>
+
+<ParamField path="warmup_steps" type="int" default="50">
+  Number of learning rate warmup steps. Typically 5-10% of total finetuning steps.
+</ParamField>
+
+<ParamField path="weight_decay" type="float" default="0.01">
+  L2 regularization coefficient. Important for preventing overfitting in finetuning.
+</ParamField>
+
+<ParamField path="gradient_accumulation_steps" type="int" default="1">
+  Number of steps to accumulate gradients before updating. Useful for effective larger batch sizes.
+</ParamField>
+
+<ParamField path="freeze_layers" type="List[str] | None" default="None">
+  List of layer patterns to freeze during finetuning. Example: `["embeddings", "layer.0", "layer.1"]`
+</ParamField>
+
+<ParamField path="lora_config" type="LoRAConfig | None" default="None">
+  Low-Rank Adaptation configuration for parameter-efficient finetuning.
+</ParamField>
+
+<ParamField path="optimizer_type" type="str" default="AdamW">
+  Optimizer algorithm. Options: `"AdamW"`, `"Adam"`, `"SGD"`
+</ParamField>
+
+<ParamField path="clip_grad" type="float" default="1.0">
+  Gradient clipping threshold. Important for stability in finetuning.
+</ParamField>
+
+## LoRAConfig
+
+<ParamField path="rank" type="int" default="16">
+  Rank of the adaptation matrices. Higher rank = more parameters but better expressiveness.
+</ParamField>
+
+<ParamField path="alpha" type="float" default="32">
+  LoRA scaling parameter. Controls the magnitude of the adaptation.
+</ParamField>
+
+<ParamField path="dropout" type="float" default="0.1">
+  Dropout probability for LoRA layers.
+</ParamField>
+
+<ParamField path="target_modules" type="List[str] | None" default="Auto-detected">
+  List of module names to apply LoRA to. If None, automatically targets attention and MLP layers.
+</ParamField>
+
+<ParamField path="bias" type="str" default="none">
+  Bias handling strategy:
+  - `"none"`: No bias adaptation
+  - `"all"`: Adapt all biases
+  - `"lora_only"`: Only adapt LoRA biases
+</ParamField>
+
+## FinetuningDataConfig
+
+<ParamField path="data_paths" type="str | List[str]" required>
+  Path(s) to finetuning data files. Should be formatted according to your task type.
+</ParamField>
+
+<ParamField path="task_type" type="str" default="text_generation">
+  Type of finetuning task:
+  - `"text_generation"`: Generative language modeling
+  - `"classification"`: Text classification
+  - `"instruction_following"`: Instruction-tuning
+  - `"code_generation"`: Code completion/generation
+  - `"time_series_forecasting"`: Time series tasks
+</ParamField>
+
+<ParamField path="max_sequence_length" type="int" default="512">
+  Maximum sequence length for finetuning examples. Shorter than training can speed up finetuning.
+</ParamField>
+
+<ParamField path="validation_split" type="float" default="0.1">
+  Portion of data reserved for validation during finetuning.
+</ParamField>
+
+<ParamField path="training_objective" type="str | callable" default="cross_entropy">
+  Loss function specification:
+  - `"cross_entropy"`: Cross-entropy loss for text generation
+  - `"classification"`: Classification loss with label smoothing
+  - `"mse"`: Mean Squared Error for regression tasks
+  - Custom callable loss function
+</ParamField>
+
+<ParamField path="data_preprocessing" type="dict | None" default="None">
+  Task-specific preprocessing options:
+  - For instruction tuning: `{"format": "alpaca", "prompt_template": "..."}`
+  - For classification: `{"label_column": "label", "text_column": "text"}`
+  - For code: `{"language": "python", "max_context_length": 1024}`
+</ParamField>
+
+<ParamField path="sampling_weight" type="float | None" default="Equal weight among all data configs">
+  Relative sampling weight for this data source in multi-task finetuning scenarios.
+</ParamField>
+
+<ParamField path="features" type="str | List[str] | callable | List[callable] | None" default="None">
+  Feature engineering functions for specialized finetuning tasks.
+</ParamField>

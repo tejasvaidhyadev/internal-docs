@@ -1,0 +1,63 @@
+---
+title: "DataPreparationConfig"
+description: "API reference for data preparation configuration"
+---
+
+## DataPreparationConfig
+
+<ParamField path="input_path" type="str | readable object" required>
+  Source location for raw data files or a readable object from which data can be accessed.
+</ParamField>
+
+<ParamField path="output_path" type="str | writable object" required>
+  Destination location for processed data files or a writable object where processed data will be stored.
+</ParamField>
+
+<ParamField path="tokenization" type="str | TimeSeriesTokenizerConfig | callable" required>
+  Tokenization strategy based on data modality:
+  - For text/string/code: String denoting a Hugging Face tokenizer name or path to a local tokenizer compatible with Hugging Face
+  - For time series: An instance of `TimeSeriesTokenizerConfig` 
+  - For custom tokenization: A callable function that can map string → tensor of floats/integers (2D for patch-based)
+</ParamField>
+
+<ParamField path="max_sequence_length" type="int" default="4096">
+  Maximum sequence length for tokenized data.
+</ParamField>
+
+## TimeSeriesTokenizerConfig
+
+<ParamField path="type" type="str" required>
+  Tokenization approach - `"patch_based"` (Chronos Bolt, TSFM, TiRex style) or `"bin_quant_based"` (Chronos style).
+</ParamField>
+
+<ParamField path="input_patch_size" type="int | None" default="None">
+  Size of input patches. Required for patch-based tokenization. Default: None for bin quantization
+</ParamField>
+
+<ParamField path="output_patch_size" type="int | None" default="None">
+  Size of output patches. Required for patch-based tokenization. Can differ from input patch size (e.g., TimesFM uses longer output patches than input). Default: None for bin quantization
+</ParamField>
+
+<ParamField path="patch_masking" type="bool | None" default="False">
+  Enables patch masking strategy. Only applicable for patch-based tokenization. Helps models learn to predict well for context lengths that are multiples of input patch length (see TimesFM paper).
+</ParamField>
+
+<ParamField path="number_of_bins" type="int | None" default="4096">
+  Number of quantization bins. Required for bin quantization-based tokenization.
+</ParamField>
+
+<ParamField path="normalization_method" type="str | callable" default="z-norm">
+  Normalization strategy. Accepts custom function that maps a list of numbers to a list of numbers.
+</ParamField>
+
+<ParamField path="normalization_mean" type="float | None" default="None">
+  Mean value for normalization. Should remain `None` for custom normalization methods. For z-norm, computes mean over first patch (patch-based tokenization, following TimesFM) or entire series (bin quantization, following Chronos).
+</ParamField>
+
+<ParamField path="normalization_std" type="float | None" default="None">
+  Standard deviation for normalization. Computes series-wise standard deviation based on first patch (patch-based) or entire series (bin quantization).
+</ParamField>
+
+<Note>
+  The system automatically handles padding, missing values, and end-of-sequence tokens.
+</Note>

@@ -1,0 +1,151 @@
+---
+title: 'Data Formats'
+description: 'Supported data formats for different modalities in Nolano.AI'
+---
+
+# Data Formats
+
+Nolano.AI supports specific data formats for different modalities to ensure seamless processing and training. Understanding these formats is crucial for preparing your data correctly.
+
+## Language & Code Data
+
+### JSONL Format
+
+For language models and code generation, Nolano.AI uses **JSONL (JSON Lines)** format where each line contains a JSON object with a `text` field containing the training content.
+
+```json
+{"text": "def fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)"}
+{"text": "The quick brown fox jumps over the lazy dog. This is a sample text for language modeling."}
+{"text": "import torch\nimport torch.nn as nn\n\nclass TransformerModel(nn.Module):\n    def __init__(self, vocab_size, d_model):\n        super().__init__()"}
+{"text": "# Machine Learning Pipeline\n\nThis document explains how to build an ML pipeline using Python and scikit-learn."}
+{"text": "SELECT customer_id, COUNT(*) as order_count FROM orders WHERE order_date >= '2023-01-01' GROUP BY customer_id"}
+```
+
+### Key Requirements
+
+<CardGroup cols={2}>
+  <Card title="JSON Validation" icon="check">
+    Each line must be valid JSON syntax
+  </Card>
+  <Card title="Text Field" icon="text">
+    Each object must contain a `text` field with string content
+  </Card>
+  <Card title="Content Types" icon="code">
+    Text can contain code, natural language, or mixed content
+  </Card>
+  <Card title="Encoding" icon="globe">
+    Supports any text encoding (UTF-8 recommended)
+  </Card>
+</CardGroup>
+
+### Best Practices
+
+<Tip>
+  **File Naming**: Use `.jsonl` extension for clarity, though `.json` also works.
+</Tip>
+
+<Warning>
+  **Escape Characters**: Ensure proper escaping of newlines (`\n`), quotes (`\"`), and other special characters in JSON.
+</Warning>
+
+## Time Series Data
+
+### AutoGluonTS Compatible Format
+
+Time series data follows the **AutoGluonTS** format, where each line contains a JSON object with time series metadata and values.
+
+### Univariate Time Series
+
+```json
+{"target": [1.2, 1.5, 1.8, 2.0, 1.9, 1.7, 2.1, 1.8], "start": "2023-01-01", "freq": "D"}
+{"target": [45.2, 48.1, 52.3, 49.7, 51.2, 47.8, 50.1], "start": "2023-01-01", "freq": "H"}
+{"target": [100, 105, 110, 108, 112, 115, 118, 120], "start": "2023-01-01 00:00:00", "freq": "15T"}
+{"target": [23.5, 24.1, 23.8, 24.7, 25.2, 24.9, 25.5], "start": "2023-06-15", "freq": "D"}
+```
+
+### Required Fields
+
+<ParamField path="target" type="array" required>
+  **Univariate**: Array of numeric values representing the time series
+  
+  **Multivariate**: Array of arrays, where each inner array represents values at a time step across multiple dimensions
+</ParamField>
+
+<ParamField path="start" type="string" required>
+  ISO format timestamp string indicating when the time series begins. Examples:
+  - `"2023-01-01"` (date only)
+  - `"2023-01-01 00:00:00"` (date and time)
+  - `"2023-01-01T00:00:00"` (ISO 8601 format)
+</ParamField>
+
+<ParamField path="freq" type="string" required>
+  Frequency string indicating the time interval between observations:
+  - `"D"` - Daily
+  - `"H"` - Hourly  
+  - `"T"` or `"min"` - Minutely
+  - `"S"` - Secondly
+  - `"W"` - Weekly
+  - `"M"` - Monthly
+  - `"15T"` - Every 15 minutes
+  - `"30S"` - Every 30 seconds
+</ParamField>
+
+### Optional Fields
+
+<AccordionGroup>
+  <Accordion title="Identification Fields">
+    <ParamField path="item_id" type="string">
+      Unique identifier for the time series, useful when training on multiple series
+    </ParamField>
+  </Accordion>
+
+</AccordionGroup>
+
+
+## Frequency Specification Guide
+
+<CardGroup cols={3}>
+  <Card title="Common Frequencies" icon="clock">
+    - `D` - Daily
+    - `H` - Hourly
+    - `T` - Minutely
+    - `S` - Secondly
+  </Card>
+  <Card title="Custom Intervals" icon="calendar">
+    - `15T` - Every 15 minutes
+    - `30S` - Every 30 seconds
+    - `2H` - Every 2 hours
+    - `5D` - Every 5 days
+  </Card>
+  <Card title="Business Frequencies" icon="briefcase">
+    - `B` - Business day
+    - `W` - Weekly
+    - `M` - Monthly
+    - `Q` - Quarterly
+  </Card>
+</CardGroup>
+
+## File Organization
+
+### Recommended Structure
+
+```
+data/
+├── training/        # Training dataset
+│   ├── text_data.jsonl
+│   ├── text_data2.jsonl
+│   └── ...          # more training files
+├── validation/      # Validation dataset
+│   ├── text_data.jsonl
+│   ├── text_data2.jsonl
+│   └── ...          # more validation files
+└── test/            # Test dataset
+    ├── text_data.jsonl
+    ├── text_data2.jsonl
+    └── ...          # more test files
+```
+
+
+<Note>
+  **Ready to prepare your data?** Check out our [Data Preparation Guide](/data-preparation) for step-by-step instructions on processing your data files.
+</Note>

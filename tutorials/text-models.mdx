@@ -1,0 +1,236 @@
+---
+title: 'Building Text Models'
+description: 'Complete tutorial for training text and code models'
+---
+
+# Building Text and Code Models
+
+This tutorial walks you through training a text model from start to finish using Nolano.AI.
+
+## Prerequisites
+
+<Steps>
+  <Step title="Install Nolano.AI">
+    ```bash
+    pip install pynolano
+    ```
+  </Step>
+  
+  <Step title="Prepare Your Data">
+    Your text data should be in JSONL format with each line containing a dictionary with a `text` key:
+    
+    ```json
+    {"text": "This is the first document."}
+    {"text": "This is another document for training."}
+    {"text": "More training data here."}
+    ```
+  </Step>
+</Steps>
+
+## Step 1: Data Preparation
+
+Create a data preparation configuration:
+
+```python data_config.py
+from pynolano import DataPreparationConfig
+
+def build() -> DataPreparationConfig:
+    return DataPreparationConfig(
+        input_path="./raw_text_data.jsonl",
+        output_path="./prepared_text_data",
+        tokenization="microsoft/DialoGPT-medium",  # Or any HF tokenizer
+        max_sequence_length=2048
+    )
+```
+
+Run the data preparation:
+
+```bash
+nolano prepare_data data_config.py
+```
+
+## Step 2: Training Configuration
+
+Create your training configuration:
+
+```python train_config.py
+from pynolano import (
+    ExperimentConfig, 
+    DataConfig, 
+    ModelConfig, 
+    OptimizationConfig,
+    MetaConfig
+)
+
+def build() -> ExperimentConfig:
+    return ExperimentConfig(
+        data_configs=DataConfig(
+            data_paths="./prepared_text_data",
+            validation_split=0.1
+        ),
+        model_config=ModelConfig(
+            architecture="microsoft/DialoGPT-medium",
+            init_method="none"  # Start from pretrained
+        ),
+        optimization_config=OptimizationConfig(
+            total_training_steps=5000,
+            max_learning_rate=2e-5,
+            global_batch_size=16,
+            learning_rate_schedule="cosine",
+            warmup_steps=500,
+            weight_decay=0.01
+        ),
+        meta_config=MetaConfig(
+            name="text-model-experiment",
+            model_save_frequency=1000,
+            max_checkpoints=3
+        )
+    )
+```
+
+## Step 3: Start Training
+
+```bash
+nolano train train_config.py
+```
+
+<Note>
+  Training will automatically use all available GPUs with data parallelism.
+</Note>
+
+## Step 4: Monitor Training
+
+Watch the training progress with real-time logging:
+
+- **Loss curves**: Monitor training and validation loss
+- **Learning rate**: Track learning rate schedule
+- **GPU utilization**: Ensure efficient resource usage
+- **Throughput**: Tokens per second metrics
+
+## Step 5: Evaluation
+
+Create an evaluation configuration:
+
+```python eval_config.py
+from pynolano import EvaluationConfig, DataConfig
+
+def build() -> EvaluationConfig:
+    return EvaluationConfig(
+        model_path="./text-model-experiment/global_step_5000",
+        data_config=DataConfig(
+            data_paths="./test_data.jsonl",
+            validation_split=1.0
+        ),
+        eval_metrics=["perplexity", "accuracy"],
+        output_predictions=True
+    )
+```
+
+Run evaluation:
+
+```bash
+nolano evaluate eval_config.py
+```
+
+## Step 6: Inference
+
+Test your trained model:
+
+```python
+from pynolano import load_model, InferenceConfig
+
+# Load the model
+model = load_model("./text-model-experiment/global_step_5000")
+
+# Configure inference
+config = InferenceConfig(
+    max_new_tokens=100,
+    temperature=0.7,
+    top_p=0.9
+)
+
+# Generate text
+results = model.generate(
+    inputs=["Once upon a time"],
+    config=config
+)
+
+print(results[0])
+```
+
+## Advanced Topics
+
+<AccordionGroup>
+  <Accordion title="Multi-Task Learning">
+    Train on multiple datasets simultaneously:
+    
+    ```python
+    data_configs=[
+        DataConfig(
+            data_paths="./general_text",
+            sampling_weight=0.7
+        ),
+        DataConfig(
+            data_paths="./domain_specific",
+            sampling_weight=0.3
+        )
+    ]
+    ```
+  </Accordion>
+
+  <Accordion title="Custom Loss Functions">
+    Implement custom training objectives:
+    
+    ```python
+    def custom_loss(predictions, targets):
+        # Your custom loss implementation
+        return loss_value
+    
+    DataConfig(
+        data_paths="./data",
+        training_objective=custom_loss
+    )
+    ```
+  </Accordion>
+
+  <Accordion title="Export to Hugging Face">
+    Share your model on Hugging Face Hub:
+    
+    ```bash
+    nolano convert_to_hf ./checkpoints/global_step_5000 train_config.py ./hf_model --upload
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card 
+    title="Learning Rate" 
+    icon="chart-line"
+    color="#935095"
+  >
+    Start with 2e-5 for fine-tuning, 3e-4 for training from scratch
+  </Card>
+  <Card 
+    title="Batch Size" 
+    icon="layers"
+    color="#B47BB6"
+  >
+    Use largest batch size that fits in memory (16-64 typically works well)
+  </Card>
+  <Card 
+    title="Sequence Length" 
+    icon="ruler"
+    color="#6F3A71"
+  >
+    Match your data's typical length; longer sequences need more memory
+  </Card>
+  <Card 
+    title="Validation" 
+    icon="check-circle"
+    color="#935095"
+  >
+    Always reserve 10-20% of data for validation
+  </Card>
+</CardGroup>

@@ -1,0 +1,267 @@
+---
+title: 'Training Configuration'
+description: 'Configure optimization and training parameters'
+---
+
+## Experiment Configuration
+
+### ExperimentConfig
+
+The main configuration class that orchestrates all aspects of model training.
+
+<ParamField path="data_configs" type="DataConfig or List[DataConfig]" required>
+  Data configuration(s) for potentially multi-objective modeling
+</ParamField>
+
+<ParamField path="optimization_config" type="OptimizationConfig" required>
+  Optimization and training parameters
+</ParamField>
+
+<ParamField path="model_config" type="ModelConfig" required>
+  Model architecture and initialization parameters
+</ParamField>
+
+<ParamField path="meta_config" type="MetaConfig" default="Uses MetaConfig defaults">
+  Metadata and run-specific parameters
+</ParamField>
+
+### MetaConfig
+
+Configuration for experiment metadata and checkpointing behavior.
+
+<ParamField path="name" type="str" default="trial-run">
+  Name identifier for this experimental run
+</ParamField>
+
+<ParamField path="seed" type="int" default="42">
+  Random seed for reproducible training
+</ParamField>
+
+<ParamField path="save_path" type="str" default="current working directory / run_name">
+  Directory path for saving model checkpoints
+</ParamField>
+
+<ParamField path="model_save_frequency" type="int" default="-1">
+  Frequency (in steps) for saving model checkpoints. Set to -1 to save only at the end of training.
+</ParamField>
+
+<ParamField path="max_checkpoints" type="int" default="-1">
+  Maximum number of model checkpoints to retain. Set to -1 for no limit.
+</ParamField>
+
+### DataConfig
+
+Configuration for training data and objectives. Can be specified as a single instance or list for multi-task learning.
+
+<ParamField path="data_paths" type="str or List[str]" required>
+  Path(s) to preprocessed data files
+</ParamField>
+
+<ParamField path="features" type="str, List[str], callable, List[callable], or None" default="None">
+  Feature engineering functions for lag tokens (historical lag features) and exogenous variables (external variables). Can be string identifier(s) or custom function(s).
+</ParamField>
+
+<ParamField path="sampling_weight" type="float or None" default="Equal weight among all data configs">
+  Relative sampling weight for this data source (normalized to sum to 1 across all data configs).
+</ParamField>
+
+<ParamField path="training_objective" type="str or callable" default="cross_entropy">
+  Loss function specification:
+  - `"cross_entropy"`: Chronos-style or text cross-entropy loss
+  - `"mse"`: Mean Squared Error (TimesFM-style)
+  - `"quantile"` or `"pinball"`: Quantile/Pinball loss (TiRex-style)
+  - `"multi_task"`: Multi-task learning (TimesFM 2.0-style)
+  - Custom callable loss function
+</ParamField>
+
+<ParamField path="validation_split" type="float" default="0.1">
+  Portion of the dataset to use as validation data (0.0-1.0, where 1.0 means all data is validation).
+</ParamField>
+
+<Warning>
+  At least one `DataConfig` must have `validation_split < 1.0` for training to proceed.
+</Warning>
+
+### OptimizationConfig
+
+Configuration for training optimization parameters.
+
+<ParamField path="total_training_steps" type="int" required>
+  Total number of training steps for the experiment
+</ParamField>
+
+<ParamField path="max_learning_rate" type="float" required>
+  Maximum learning rate value
+</ParamField>
+
+<ParamField path="global_batch_size" type="int" required>
+  Global batch size for training
+</ParamField>
+
+<ParamField path="learning_rate_schedule" type="str or callable" default="constant">
+  Learning rate scheduling strategy:
+  - String options: `"constant"`, `"linear"`, `"cosine"`, `"exponential"`
+  - Custom function with signature: `(learning_rate, current_step, total_steps) → decayed_rate`
+  
+  <Note>
+    Warmup is applied after this schedule and must be disabled separately if not needed
+  </Note>
+</ParamField>
+
+<ParamField path="warmup_steps" type="int" default="0">
+  Number of learning rate warmup steps
+</ParamField>
+
+<ParamField path="decay_steps" type="int" default="0">
+  Number of learning rate decay steps. Must be set to 0 when using custom learning rate schedules.
+  
+  <Warning>
+    Constraint: `warmup_steps + decay_steps ≤ total_training_steps`
+  </Warning>
+</ParamField>
+
+<ParamField path="min_learning_rate" type="float or None" default="max_learning_rate / 10">
+  Minimum learning rate value
+</ParamField>
+
+<ParamField path="optimizer_type" type="str" default="Adam">
+  Optimizer algorithm. Options: `"Adam"`, `"SGD"`, `"Lion"`
+</ParamField>
+
+<ParamField path="weight_decay" type="float" default="0.01">
+  L2 regularization coefficient
+</ParamField>
+
+<ParamField path="z_loss" type="float" default="0.0">
+  Z-loss regularization coefficient. Set to 0.0 to disable.
+</ParamField>
+
+<ParamField path="load_balancing" type="float or None" default="None">
+  Load balancing coefficient for Mixture of Experts (MoE) models. Only applicable for MoE architectures.
+</ParamField>
+
+<ParamField path="clip_grad" type="float" default="1.0">
+  Gradient clipping threshold based on global L2 norm
+</ParamField>
+
+## Example Configurations
+
+<CodeGroup>
+```python Basic Training
+from pynolano import ExperimentConfig, DataConfig, ModelConfig, OptimizationConfig
+
+def build() -> ExperimentConfig:
+    return ExperimentConfig(
+        data_configs=DataConfig(data_paths="./prepared_data"),
+        model_config=ModelConfig("Qwen/Qwen3-4B"),
+        optimization_config=OptimizationConfig(
+            total_training_steps=1000,
+            max_learning_rate=3e-4,
+            global_batch_size=32
+        )
+    )
+```
+
+```python Advanced Training
+from pynolano import ExperimentConfig, DataConfig, ModelConfig, OptimizationConfig, MetaConfig
+
+def build() -> ExperimentConfig:
+    return ExperimentConfig(
+        data_configs=[
+            DataConfig(
+                data_paths="./text_data",
+                training_objective="cross_entropy",
+                sampling_weight=0.7
+            ),
+            DataConfig(
+                data_paths="./code_data", 
+                training_objective="cross_entropy",
+                sampling_weight=0.3
+            )
+        ],
+        model_config=ModelConfig(
+            architecture="Qwen/Qwen3-4B",
+            init_method="normal"
+        ),
+        optimization_config=OptimizationConfig(
+            total_training_steps=10000,
+            max_learning_rate=1e-4,
+            global_batch_size=64,
+            learning_rate_schedule="cosine",
+            warmup_steps=1000,
+            optimizer_type="Adam",
+            weight_decay=0.01
+        ),
+        meta_config=MetaConfig(
+            name="multi-task-experiment",
+            seed=42,
+            model_save_frequency=1000,
+            max_checkpoints=5
+        )
+    )
+```
+
+```python Time Series Training
+from pynolano import ExperimentConfig, DataConfig, ModelConfig, OptimizationConfig
+
+def build() -> ExperimentConfig:
+    return ExperimentConfig(
+        data_configs=DataConfig(
+            data_paths="./ts_prepared_data",
+            training_objective="mse",
+            validation_split=0.2
+        ),
+        model_config=ModelConfig("TimesFM-1B"),  # Coming soon
+        optimization_config=OptimizationConfig(
+            total_training_steps=5000,
+            max_learning_rate=5e-4,
+            global_batch_size=128,
+            learning_rate_schedule="linear",
+            warmup_steps=500
+        )
+    )
+```
+</CodeGroup>
+
+## Additional Features
+
+### Hyperparameter Sweep
+
+<Info>
+  Hyperparameter sweep functionality is currently in development and will be available in a future release.
+</Info>
+
+### convert_to_hf()
+
+The `convert_to_hf()` function converts trained Nolano.AI models to Hugging Face format for easy sharing and deployment.
+
+<CodeGroup>
+```python Function Signature
+pynolano.convert_to_hf(
+    input_dir: str,
+    config_file: str,
+    output_dir: str,
+    upload: bool = False
+)
+```
+
+```bash CLI Usage
+nolano convert_to_hf ./checkpoints/global_step_1000 config.yaml ./hf_model --upload
+```
+</CodeGroup>
+
+<ParamField path="input_dir" type="str" required>
+  Path to the checkpoint directory (e.g., `/path/to/checkpoint/global_step_XXXXX`)
+</ParamField>
+
+<ParamField path="config_file" type="str" required>
+  Path to the model configuration YAML file used during training
+</ParamField>
+
+<ParamField path="output_dir" type="str" required>
+  Destination directory for the converted Hugging Face model
+</ParamField>
+
+<ParamField path="upload" type="bool" default="False">
+  Whether to directly upload the converted model to Hugging Face Hub
+</ParamField>

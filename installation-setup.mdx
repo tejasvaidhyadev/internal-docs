@@ -1,0 +1,367 @@
+---
+title: 'Installation & Setup'
+description: 'Choose between Nolano Cloud or self-hosted installation for your foundation model research'
+---
+
+# Installation & Setup
+
+Get started with Nolano.AI by choosing the deployment option that best fits your research needs and infrastructure requirements.
+
+<CardGroup cols={2}>
+  <Card
+    title="Nolano Cloud"
+    icon="cloud"
+    color="#935095"
+    href="#nolano-cloud"
+  >
+    Managed cloud platform - start training immediately with zero setup
+  </Card>
+  <Card
+    title="Self-Hosted Installation"
+    icon="server"
+    color="#B47BB6"
+    href="#self-hosted-installation"
+  >
+    Install on your own infrastructure for maximum control and customization
+  </Card>
+</CardGroup>
+
+---
+
+## Nolano Cloud (Coming Soon)
+
+The fastest way to get started with foundation model research. Our managed cloud platform provides instant access to high-performance compute with zero infrastructure management.
+
+### Features
+
+<AccordionGroup>
+  <Accordion title="Instant Access">
+    - No installation required
+    - Pre-configured environments with all dependencies
+    - Immediate access to GPU clusters
+    - Automatic scaling based on workload
+  </Accordion>
+
+  <Accordion title="Managed Infrastructure">
+    - High-performance A100 and H100 GPU clusters
+    - Distributed training across multiple nodes
+    - Automatic fault tolerance and recovery
+    - Built-in monitoring and logging
+  </Accordion>
+
+  <Accordion title="Collaborative Features">
+    - Team workspaces and shared experiments
+    - Version control for models and datasets
+    - Experiment tracking and comparison
+    - Secure data handling and privacy
+  </Accordion>
+</AccordionGroup>
+
+### Getting Started with Nolano Cloud (Coming Soon)
+
+<Steps>
+  <Step title="Sign Up">
+    Create your account at [nolano.ai](https://nolano.ai) and verify your email.
+  </Step>
+
+  <Step title="Choose Your Plan">
+    Select a plan that fits your research needs:
+    
+    <CardGroup cols={3}>
+      <Card title="Lab" icon="users" color="#B47BB6">
+        **$99/month**
+        - 100 GPU hours/month
+        - Multi-node training
+        - Priority support
+      </Card>
+      <Card title="Enterprise" icon="building" color="#6F3A71">
+        **Custom pricing**
+        - Unlimited usage
+        - Dedicated clusters
+        - Custom SLAs
+      </Card>
+    </CardGroup>
+  </Step>
+
+  <Step title="Access Your Workspace">
+    Once your account is set up, the Nolano team will provide you with access credentials and setup instructions for your workspace. You'll receive:
+    
+    - CLI installation package and authentication tokens
+    - Workspace setup guide tailored to your research needs
+    
+    <Note>
+      **Getting Access**: Reach out to the Nolano team at [hello@nolano.ai](mailto:hello@nolano.ai) to request access to Nolano Cloud and receive your personalized setup instructions.
+    </Note>
+  </Step>
+
+  <Step title="Upload Your Data">
+    The Nolano team will guide you through the data upload process, which includes:
+    
+    - Secure data transfer protocols
+    - Data validation and preprocessing options
+    - Integration with your existing data pipelines
+    
+    <Tip>
+      The team will provide you with the appropriate tools and access methods based on your data size and security requirements.
+    </Tip>
+  </Step>
+</Steps>
+
+<Tip>
+  **New to foundation models?** Our cloud platform includes guided tutorials and example datasets to help you get started quickly.
+</Tip>
+
+---
+
+## Self-Hosted Installation
+
+Install Nolano.AI on your own infrastructure for complete control over your research environment, data privacy, and compute resources.
+
+### System Requirements
+
+<Tabs>
+  <Tab title="Minimum Requirements">
+    - **OS**: Ubuntu 20.04+ or CentOS 8+
+    - **Python**: 3.9 or higher
+    - **GPU**: CUDA-compatible GPU with 16GB+ VRAM
+    - **RAM**: 32GB system memory
+    - **Storage**: 500GB available disk space
+    - **Network**: High-bandwidth internet for model downloads
+  </Tab>
+  
+  <Tab title="Recommended Setup">
+    - **OS**: Ubuntu 22.04 LTS
+    - **Python**: 3.11
+    - **GPU**: A100 (80GB) or H100 for large models
+    - **RAM**: 128GB+ system memory
+    - **Storage**: 2TB+ NVMe SSD
+    - **Network**: 10Gbps+ for multi-node setups
+  </Tab>
+  
+  <Tab title="Multi-Node Cluster">
+    - **Nodes**: 2-8 GPU nodes
+    - **Interconnect**: InfiniBand or 100Gbps Ethernet
+    - **Shared Storage**: NFS or distributed filesystem
+    - **Job Scheduler**: Slurm (optional but recommended)
+  </Tab>
+</Tabs>
+
+### Installation Steps
+
+<Steps>
+  <Step title="Prerequisites">
+    Install system dependencies and CUDA toolkit:
+
+    ```bash
+    # Update system packages
+    sudo apt update && sudo apt upgrade -y
+    
+    # Install essential build tools
+    sudo apt install -y build-essential git curl wget
+    
+    # Install CUDA Toolkit (12.1 recommended)
+    wget https://developer.download.nvidia.com/compute/cuda/12.1.0/local_installers/cuda_12.1.0_530.30.02_linux.run
+    sudo sh cuda_12.1.0_530.30.02_linux.run
+    
+    # Add CUDA to PATH
+    echo 'export PATH=/usr/local/cuda/bin:$PATH' >> ~/.bashrc
+    echo 'export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
+    source ~/.bashrc
+    ```
+  </Step>
+
+  <Step title="Python Environment Setup">
+    Create and configure a Python environment:
+
+    ```bash
+    # Install Python 3.11 and pip
+    sudo apt install -y python3.11 python3.11-pip python3.11-venv
+    
+    # Create virtual environment
+    python3.11 -m venv nolano-env
+    source nolano-env/bin/activate
+    
+    # Upgrade pip and install essential packages
+    pip install --upgrade pip setuptools wheel
+    ```
+  </Step>
+
+  <Step title="Get Nolano.AI Access">
+    Contact the Nolano team to receive the installation package and setup instructions:
+
+    <Card title="Request Self-Hosted Access" icon="envelope" color="#935095">
+      Email [hello@nolano.ai](mailto:hello@nolano.ai) with:
+      - Your research institution/organization
+      - Intended use case and research goals
+      - Hardware specifications and cluster details
+      - Timeline for your project
+    </Card>
+
+    The team will provide you with:
+    - Custom installation package tailored to your environment
+    - Detailed setup guide for your specific hardware configuration
+    - License keys and authentication credentials
+    - Direct support during installation process
+
+    <Warning>
+      Nolano.AI is currently in private beta. Access is granted on a case-by-case basis to qualified research institutions and organizations.
+    </Warning>
+  </Step>
+
+  <Step title="Installation & Verification">
+    The Nolano team will guide you through the installation process and help verify that everything is working correctly. This includes:
+    
+    - Running system diagnostics to ensure hardware compatibility
+    - Configuring distributed training settings for your cluster
+    - Testing GPU detection and CUDA integration
+    - Validating network connectivity for multi-node setups
+    
+    <Note>
+      The team provides hands-on support during installation to ensure optimal performance for your specific research environment.
+    </Note>
+  </Step>
+
+  <Step title="Configuration">
+    The Nolano team will help you configure the system for your specific environment:
+
+    <AccordionGroup>
+      <Accordion title="Compute Configuration">
+        - GPU count and memory allocation
+        - Mixed precision training settings
+        - Gradient checkpointing optimization
+        - Hardware-specific performance tuning
+      </Accordion>
+      
+      <Accordion title="Storage Setup">
+        - Cache and checkpoint directory configuration
+        - Data storage path optimization
+        - Shared storage for multi-node clusters
+        - Backup and recovery settings
+      </Accordion>
+      
+      <Accordion title="Distributed Training">
+        - Multi-node communication setup
+        - Network backend configuration (NCCL/Gloo)
+        - Fault tolerance and recovery settings
+        - Load balancing across nodes
+      </Accordion>
+    </AccordionGroup>
+    
+    <Tip>
+      The team provides pre-configured templates based on your hardware setup and research requirements.
+    </Tip>
+  </Step>
+</Steps>
+
+### Multi-Node Setup
+
+For distributed training across multiple machines, the Nolano team provides comprehensive cluster setup support:
+
+<Accordion title="Cluster Configuration Services">
+  The team will help you with:
+  
+  - **Network Architecture Planning**: Design optimal interconnect topology for your cluster
+  - **Shared Storage Setup**: Configure high-performance distributed filesystems (NFS, Lustre, or custom solutions)
+  - **Node Communication**: Establish secure and efficient inter-node communication protocols
+  - **Load Balancing**: Implement dynamic workload distribution across available resources
+  - **Fault Tolerance**: Set up automatic failover and recovery mechanisms
+  - **Performance Optimization**: Fine-tune settings for your specific hardware configuration
+  
+  <Note>
+    Multi-node deployments require careful planning and configuration. The Nolano team ensures optimal performance and reliability for your distributed training environment.
+  </Note>
+</Accordion>
+
+### Docker Installation
+
+For containerized deployments, the Nolano team provides:
+
+<CardGroup cols={2}>
+  <Card title="Pre-built Containers" icon="box" color="#935095">
+    Ready-to-use Docker images with Nolano.AI pre-installed and optimized for different GPU architectures
+  </Card>
+  <Card title="Custom Containerization" icon="docker" color="#B47BB6">
+    Tailored Docker configurations for your specific research environment and deployment requirements
+  </Card>
+</CardGroup>
+
+<Accordion title="Container Support Services">
+  - **Optimized Base Images**: Pre-configured containers with all dependencies
+  - **GPU Integration**: CUDA and cuDNN optimization for containerized environments
+  - **Orchestration Support**: Kubernetes and Docker Swarm deployment configurations
+  - **Volume Management**: Efficient data and model storage strategies
+  - **Security Configuration**: Container security best practices and access controls
+  
+  <Note>
+    Contact [hello@nolano.ai](mailto:hello@nolano.ai) to request access to pre-built containers or custom containerization support.
+  </Note>
+</Accordion>
+
+### Support & Troubleshooting
+
+The Nolano team provides comprehensive support for installation and ongoing maintenance:
+
+<AccordionGroup>
+  <Accordion title="24/7 Technical Support">
+    - Direct access to Nolano engineers for critical issues
+    - Real-time troubleshooting and debugging assistance
+    - Hardware compatibility verification and optimization
+    - Performance tuning and configuration guidance
+  </Accordion>
+
+  <Accordion title="Common Issue Resolution">
+    - **CUDA/GPU Problems**: Driver compatibility, memory allocation, multi-GPU setup
+    - **Memory Issues**: Out-of-memory errors, batch size optimization, gradient checkpointing
+    - **Network/Distributed**: Inter-node communication, firewall configuration, shared storage access
+    - **Performance**: Training speed optimization, resource utilization, bottleneck identification
+  </Accordion>
+
+  <Accordion title="Proactive Monitoring">
+    - System health monitoring and alerting
+    - Performance baseline establishment
+    - Predictive maintenance and updates
+    - Regular system optimization reviews
+  </Accordion>
+</AccordionGroup>
+
+<Card title="Get Support" icon="headset" color="#935095">
+  For any installation or technical issues, contact the Nolano team:
+  - **Email**: [hello@nolano.ai](mailto:hello@nolano.ai)
+  - **Emergency Support**: Available for production deployments
+  - **Response Time**: Within a single call to the founders phone numbers
+</Card>
+
+## Next Steps
+
+After installation, you're ready to start your foundation model research:
+
+<CardGroup cols={3}>
+  <Card
+    title="Quick Start"
+    icon="rocket"
+    href="/quickstart"
+    color="#935095"
+  >
+    Get your first model training in under an hour
+  </Card>
+  <Card
+    title="Data Preparation"
+    icon="database"
+    href="/data-preparation"
+    color="#B47BB6"
+  >
+    Learn how to prepare and tokenize your datasets
+  </Card>
+  <Card
+    title="Model Configuration"
+    icon="brain"
+    href="/model-configuration"
+    color="#6F3A71"
+  >
+    Explore different model architectures and settings
+  </Card>
+</CardGroup>
+
+<Note>
+  **Need Help?** Join our [Discord community](https://discord.gg/nolano) or reach out to [support](mailto:hello@nolano.ai) for assistance with installation and setup.
+</Note>

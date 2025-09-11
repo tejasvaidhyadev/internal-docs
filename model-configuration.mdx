@@ -1,0 +1,96 @@
+---
+title: 'Model Configuration'
+description: 'Configure model architecture and initialization'
+---
+
+## Model Configuration
+
+### ModelConfig
+
+Configuration for model architecture and initialization.
+
+<ParamField path="architecture" type="str" required>
+  Model architecture specification. Supports major dense and MoE Hugging Face architectures including Qwen, LLaMA, Gemma.
+  
+  <Note>
+    TSFM and other architectures coming soon.
+  </Note>
+</ParamField>
+
+<ParamField path="init_method" type="str" default="normal">
+  Weight initialization strategy:
+  - `"none"`: Load from pre-trained model (Qwen/LLaMA/Gemma)
+  - `"normal"`: Normal distribution initialization
+  - `"xavier_uniform"`: Xavier uniform initialization
+  - `"wang_init"`: Wang initialization method
+</ParamField>
+
+<ParamField path="model_path" type="str or None" default="None">
+  Path to pre-trained model for continual training. Must be `None` if `init_method` is not `"none"`.
+</ParamField>
+
+<ParamField path="load_optimizer" type="bool or None" default="None">
+  Whether to load optimizer state from checkpoint. Set to `True` for continual training from checkpoint.
+</ParamField>
+
+## Example Configurations
+
+<CodeGroup>
+```python Pre-trained Model
+from pynolano import ModelConfig
+
+config = ModelConfig(
+    architecture="Qwen/Qwen3-4B",
+    init_method="none",
+    model_path="./pretrained_model",
+    load_optimizer=False
+)
+```
+
+```python From Scratch
+from pynolano import ModelConfig
+
+config = ModelConfig(
+    architecture="Qwen/Qwen3-4B",
+    init_method="normal"
+)
+```
+
+```python Continual Training
+from pynolano import ModelConfig
+
+config = ModelConfig(
+    architecture="Qwen/Qwen3-4B",
+    init_method="none",
+    model_path="./checkpoint/global_step_1000",
+    load_optimizer=True
+)
+```
+</CodeGroup>
+
+## Supported Architectures
+
+<Tabs>
+  <Tab title="Dense Models">
+    - **LLaMA**: LLaMA 2, Code Llama
+    - **Qwen**: Qwen 1.5, Qwen 2
+    - **Gemma**: Gemma 2B, 7B
+    - **Mistral**: Mistral 7B
+  </Tab>
+  
+  <Tab title="Mixture of Experts (MoE)">
+    - **Qwen MoE**: Qwen1.5-MoE-A2.7B
+    - **DeepSeek**: DeepSeek MoE models
+    - **Mixtral**: Mixtral 8x7B
+  </Tab>
+  
+  <Tab title="Time Series (Coming Soon)">
+    - **TSFM**: Time Series Foundation Models
+    - **Chronos**: Amazon Chronos models
+    - **TimesFM**: Google TimesFM
+  </Tab>
+</Tabs>
+
+<Warning>
+  When using `init_method="none"`, you must provide a valid `model_path`. The model path should point to a compatible pre-trained model or checkpoint.
+</Warning>

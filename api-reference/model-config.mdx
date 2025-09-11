@@ -1,0 +1,26 @@
+---
+title: "ModelConfig"
+description: "API reference for model configuration"
+---
+
+## ModelConfig
+
+<ParamField path="architecture" type="str" required>
+  Model architecture specification. Supports major dense and MoE Hugging Face architectures including Qwen, LLaMA, Gemma.
+</ParamField>
+
+<ParamField path="init_method" type="str" default="normal">
+  Weight initialization strategy:
+  - `"none"`: Load from pre-trained model (Qwen/LLaMA/Gemma)
+  - `"normal"`: Normal distribution initialization
+  - `"xavier_uniform"`: Xavier uniform initialization
+  - `"wang_init"`: Wang initialization method
+</ParamField>
+
+<ParamField path="model_path" type="str | None" default="None">
+  Path to pre-trained model for continual training. Must be `None` if `init_method` is not `"none"`.
+</ParamField>
+
+<ParamField path="load_optimizer" type="bool | None" default="None">
+  Whether to load optimizer state from checkpoint. Set to `True` for continual training from checkpoint.
+</ParamField>

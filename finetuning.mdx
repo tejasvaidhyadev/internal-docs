@@ -1,0 +1,379 @@
+---
+title: 'Finetuning Configuration'
+description: 'Configure finetuning parameters for pre-trained models'
+---
+
+## Finetuning Configuration
+
+Finetuning allows you to adapt pre-trained models to specific tasks or domains with minimal computational overhead. The finetuning process leverages existing model knowledge while updating parameters to optimize for your specific use case.
+
+### FinetuningConfig
+
+The main configuration class for finetuning experiments, building on the ExperimentConfig structure.
+
+<ParamField path="base_model_path" type="str" required>
+  Path to the pre-trained model checkpoint or Hugging Face model identifier to finetune from
+</ParamField>
+
+<ParamField path="data_configs" type="DataConfig or List[DataConfig]" required>
+  Data configuration(s) for finetuning tasks. Supports multi-task finetuning scenarios.
+</ParamField>
+
+<ParamField path="finetuning_config" type="FinetuningOptimizationConfig" required>
+  Finetuning-specific optimization parameters with typically lower learning rates
+</ParamField>
+
+<ParamField path="model_config" type="ModelConfig" required>
+  Model architecture configuration. Must match the base model architecture.
+</ParamField>
+
+<ParamField path="meta_config" type="MetaConfig" default="Uses MetaConfig defaults">
+  Metadata and run-specific parameters for the finetuning experiment
+</ParamField>
+
+### FinetuningOptimizationConfig
+
+Specialized optimization configuration for finetuning with recommended parameter ranges.
+
+<ParamField path="total_training_steps" type="int" required>
+  Total number of finetuning steps. Typically much lower than full training (500-5000 steps).
+</ParamField>
+
+<ParamField path="max_learning_rate" type="float" required>
+  Maximum learning rate for finetuning. Recommended range: 1e-5 to 5e-4 (lower than full training).
+</ParamField>
+
+<ParamField path="global_batch_size" type="int" required>
+  Global batch size for finetuning. Can be smaller than full training due to fewer steps.
+</ParamField>
+
+<ParamField path="learning_rate_schedule" type="str or callable" default="linear">
+  Learning rate scheduling strategy for finetuning:
+  - `"linear"`: Linear decay (recommended for finetuning)
+  - `"cosine"`: Cosine annealing
+  - `"constant"`: Constant learning rate
+  - Custom function with signature: `(learning_rate, current_step, total_steps) → decayed_rate`
+</ParamField>
+
+<ParamField path="warmup_steps" type="int" default="50">
+  Number of learning rate warmup steps. Typically 5-10% of total finetuning steps.
+</ParamField>
+
+<ParamField path="weight_decay" type="float" default="0.01">
+  L2 regularization coefficient. Important for preventing overfitting in finetuning.
+</ParamField>
+
+<ParamField path="gradient_accumulation_steps" type="int" default="1">
+  Number of steps to accumulate gradients before updating. Useful for effective larger batch sizes.
+</ParamField>
+
+<ParamField path="freeze_layers" type="List[str] or None" default="None">
+  List of layer patterns to freeze during finetuning. Example: `["embeddings", "layer.0", "layer.1"]`
+</ParamField>
+
+<ParamField path="lora_config" type="LoRAConfig or None" default="None">
+  Low-Rank Adaptation configuration for parameter-efficient finetuning
+</ParamField>
+
+<ParamField path="optimizer_type" type="str" default="AdamW">
+  Optimizer algorithm. Options: `"AdamW"`, `"Adam"`, `"SGD"`
+</ParamField>
+
+<ParamField path="clip_grad" type="float" default="1.0">
+  Gradient clipping threshold. Important for stability in finetuning.
+</ParamField>
+
+### LoRAConfig
+
+Configuration for Low-Rank Adaptation (LoRA) parameter-efficient finetuning.
+
+<ParamField path="rank" type="int" default="16">
+  Rank of the adaptation matrices. Higher rank = more parameters but better expressiveness.
+</ParamField>
+
+<ParamField path="alpha" type="float" default="32">
+  LoRA scaling parameter. Controls the magnitude of the adaptation.
+</ParamField>
+
+<ParamField path="dropout" type="float" default="0.1">
+  Dropout probability for LoRA layers.
+</ParamField>
+
+<ParamField path="target_modules" type="List[str] or None" default="Auto-detected">
+  List of module names to apply LoRA to. If None, automatically targets attention and MLP layers.
+</ParamField>
+
+<ParamField path="bias" type="str" default="none">
+  Bias handling strategy:
+  - `"none"`: No bias adaptation
+  - `"all"`: Adapt all biases
+  - `"lora_only"`: Only adapt LoRA biases
+</ParamField>
+
+### FinetuningDataConfig
+
+Extended data configuration with finetuning-specific options.
+
+<ParamField path="data_paths" type="str or List[str]" required>
+  Path(s) to finetuning data files. Should be formatted according to your task type.
+</ParamField>
+
+<ParamField path="task_type" type="str" default="text_generation">
+  Type of finetuning task:
+  - `"text_generation"`: Generative language modeling
+  - `"classification"`: Text classification
+  - `"instruction_following"`: Instruction-tuning
+  - `"code_generation"`: Code completion/generation
+  - `"time_series_forecasting"`: Time series tasks
+</ParamField>
+
+<ParamField path="max_sequence_length" type="int" default="512">
+  Maximum sequence length for finetuning examples. Shorter than training can speed up finetuning.
+</ParamField>
+
+<ParamField path="validation_split" type="float" default="0.1">
+  Portion of data reserved for validation during finetuning.
+</ParamField>
+
+<ParamField path="data_preprocessing" type="dict or None" default="None">
+  Task-specific preprocessing options:
+  - For instruction tuning: `{"format": "alpaca", "prompt_template": "..."}`
+  - For classification: `{"label_column": "label", "text_column": "text"}`
+</ParamField>
+
+## Example Configurations
+
+<CodeGroup>
+```python Basic Finetuning
+from pynolano import FinetuningConfig, FinetuningDataConfig, ModelConfig, FinetuningOptimizationConfig
+
+def build() -> FinetuningConfig:
+    return FinetuningConfig(
+        base_model_path="Qwen/Qwen3-4B",
+        data_configs=FinetuningDataConfig(
+            data_paths="./finetuning_data",
+            task_type="text_generation"
+        ),
+        model_config=ModelConfig(
+            architecture="Qwen/Qwen3-4B",
+            init_method="none"
+        ),
+        finetuning_config=FinetuningOptimizationConfig(
+            total_training_steps=1000,
+            max_learning_rate=5e-5,
+            global_batch_size=16,
+            learning_rate_schedule="linear",
+            warmup_steps=100
+        )
+    )
+```
+
+```python LoRA Finetuning
+from pynolano import FinetuningConfig, FinetuningDataConfig, ModelConfig, FinetuningOptimizationConfig, LoRAConfig
+
+def build() -> FinetuningConfig:
+    return FinetuningConfig(
+        base_model_path="./pretrained_checkpoint/global_step_10000",
+        data_configs=FinetuningDataConfig(
+            data_paths="./instruction_data",
+            task_type="instruction_following",
+            max_sequence_length=1024,
+            data_preprocessing={
+                "format": "alpaca",
+                "prompt_template": "### Instruction:\n{instruction}\n\n### Response:\n"
+            }
+        ),
+        model_config=ModelConfig(
+            architecture="Qwen/Qwen3-4B",
+            init_method="none"
+        ),
+        finetuning_config=FinetuningOptimizationConfig(
+            total_training_steps=2000,
+            max_learning_rate=3e-4,
+            global_batch_size=32,
+            learning_rate_schedule="cosine",
+            warmup_steps=200,
+            lora_config=LoRAConfig(
+                rank=16,
+                alpha=32,
+                dropout=0.1,
+                target_modules=["q_proj", "v_proj", "o_proj", "gate_proj"]
+            )
+        )
+    )
+```
+
+```python Domain-Specific Finetuning
+from pynolano import FinetuningConfig, FinetuningDataConfig, ModelConfig, FinetuningOptimizationConfig, MetaConfig
+
+def build() -> FinetuningConfig:
+    return FinetuningConfig(
+        base_model_path="Qwen/Qwen3-4B",
+        data_configs=[
+            FinetuningDataConfig(
+                data_paths="./medical_text_data",
+                task_type="text_generation",
+                sampling_weight=0.7,
+                max_sequence_length=512
+            ),
+            FinetuningDataConfig(
+                data_paths="./medical_qa_data",
+                task_type="instruction_following",
+                sampling_weight=0.3,
+                max_sequence_length=1024
+            )
+        ],
+        model_config=ModelConfig(
+            architecture="Qwen/Qwen3-4B",
+            init_method="none"
+        ),
+        finetuning_config=FinetuningOptimizationConfig(
+            total_training_steps=3000,
+            max_learning_rate=1e-4,
+            global_batch_size=64,
+            learning_rate_schedule="linear",
+            warmup_steps=300,
+            weight_decay=0.01,
+            freeze_layers=["embeddings"]  # Freeze embedding layer
+        ),
+        meta_config=MetaConfig(
+            name="medical-domain-finetune",
+            seed=42,
+            model_save_frequency=500,
+            max_checkpoints=3
+        )
+    )
+```
+
+```python Classification Finetuning
+from pynolano import FinetuningConfig, FinetuningDataConfig, ModelConfig, FinetuningOptimizationConfig
+
+def build() -> FinetuningConfig:
+    return FinetuningConfig(
+        base_model_path="Qwen/Qwen3-4B",
+        data_configs=FinetuningDataConfig(
+            data_paths="./classification_data.jsonl",
+            task_type="classification",
+            training_objective="cross_entropy",
+            data_preprocessing={
+                "label_column": "label",
+                "text_column": "text",
+                "num_classes": 5
+            },
+            validation_split=0.2
+        ),
+        model_config=ModelConfig(
+            architecture="Qwen/Qwen3-4B",
+            init_method="none"
+        ),
+        finetuning_config=FinetuningOptimizationConfig(
+            total_training_steps=1500,
+            max_learning_rate=2e-5,
+            global_batch_size=32,
+            learning_rate_schedule="linear",
+            warmup_steps=150,
+            gradient_accumulation_steps=2
+        )
+    )
+```
+</CodeGroup>
+
+## Finetuning Best Practices
+
+### Learning Rate Selection
+
+<Tip>
+  Start with learning rates 5-10x lower than full training. For most models:
+  - **Full finetuning**: 1e-5 to 5e-4
+  - **LoRA finetuning**: 1e-4 to 1e-3
+  - **Classification tasks**: 1e-5 to 1e-4
+</Tip>
+
+### Data Requirements
+
+<Warning>
+  Finetuning requires high-quality, task-specific data. Generally:
+  - **Minimum**: 100-500 examples per task
+  - **Recommended**: 1,000-10,000 examples
+  - **Quality over quantity**: Clean, representative data is more important than volume
+</Warning>
+
+### Training Duration
+
+<Info>
+  Finetuning converges much faster than full training:
+  - **Quick adaptation**: 500-1,000 steps
+  - **Complex tasks**: 2,000-5,000 steps
+  - **Domain transfer**: 3,000-10,000 steps
+  
+  Monitor validation metrics to avoid overfitting.
+</Info>
+
+### Parameter-Efficient Methods
+
+| Method | Memory | Training Speed | Performance | Use Case |
+|--------|---------|---------------|-------------|-----------|
+| **Full Finetuning** | High | Slow | Best | High-resource scenarios |
+| **LoRA** | Low | Fast | Good | Most scenarios |
+| **Frozen Layers** | Medium | Medium | Good | Domain adaptation |
+
+## Advanced Features
+
+### Multi-Task Finetuning
+
+Finetune on multiple related tasks simultaneously for better generalization:
+
+```python
+data_configs = [
+    FinetuningDataConfig(data_paths="./task1_data", sampling_weight=0.4),
+    FinetuningDataConfig(data_paths="./task2_data", sampling_weight=0.6)
+]
+```
+
+### Curriculum Learning
+
+Gradually increase task complexity during finetuning:
+
+<Info>
+  Curriculum learning support is planned for future releases.
+</Info>
+
+### convert_finetuned_to_hf()
+
+Convert finetuned models to Hugging Face format, preserving both base model and adaptations.
+
+<CodeGroup>
+```python Function Signature
+pynolano.convert_finetuned_to_hf(
+    input_dir: str,
+    config_file: str,
+    output_dir: str,
+    merge_lora: bool = False,
+    upload: bool = False
+)
+```
+
+```bash CLI Usage
+nolano convert_finetuned_to_hf ./finetuned_checkpoints/global_step_1000 finetune_config.yaml ./hf_model --merge_lora --upload
+```
+</CodeGroup>
+
+<ParamField path="input_dir" type="str" required>
+  Path to the finetuned checkpoint directory
+</ParamField>
+
+<ParamField path="config_file" type="str" required>
+  Path to the finetuning configuration YAML file
+</ParamField>
+
+<ParamField path="output_dir" type="str" required>
+  Destination directory for the converted Hugging Face model
+</ParamField>
+
+<ParamField path="merge_lora" type="bool" default="False">
+  Whether to merge LoRA weights into the base model. If False, saves LoRA adapters separately.
+</ParamField>
+
+<ParamField path="upload" type="bool" default="False">
+  Whether to directly upload the converted model to Hugging Face Hub
+</ParamField>

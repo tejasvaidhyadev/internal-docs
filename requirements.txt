@@ -1,0 +1,2 @@
+# Basic markdown support
+pygments>=2.16.0

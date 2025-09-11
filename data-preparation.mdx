@@ -1,0 +1,149 @@
+---
+title: 'Data Preparation'
+description: 'Configure and process your data for training'
+---
+
+## Data Preparation Configuration
+
+### DataPreparationConfig
+
+The `DataPreparationConfig` class defines how raw data should be processed and tokenized for training.
+
+<ParamField path="input_path" type="str or readable object" required>
+  Source location for raw data files or a readable object from which data can be accessed.
+</ParamField>
+
+<ParamField path="output_path" type="str or writable object" required>
+  Destination location for processed data files or a writable object where processed data will be stored.
+</ParamField>
+
+<ParamField path="tokenization" type="str, TimeSeriesTokenizerConfig, or callable" required>
+  Tokenization strategy based on data modality:
+  - **Text/string/code**: String denoting a Hugging Face tokenizer name or path to a local tokenizer
+  - **Time series**: An instance of `TimeSeriesTokenizerConfig`
+  - **Custom tokenization**: A callable function that can map string → tensor of floats/integers (2D for patch-based)
+</ParamField>
+
+<ParamField path="max_sequence_length" type="int" default="4096">
+  Maximum sequence length for tokenized data.
+</ParamField>
+
+### TimeSeriesTokenizerConfig
+
+Configuration for time series-specific tokenization parameters.
+
+<ParamField path="type" type="str" required>
+  Tokenization approach - `"patch_based"` (Chronos Bolt, TSFM, TiRex style) or `"bin_quant_based"` (Chronos style).
+</ParamField>
+
+<ParamField path="input_patch_size" type="int or None" default="None">
+  Size of input patches. Required for patch-based tokenization.
+</ParamField>
+
+<ParamField path="output_patch_size" type="int or None" default="None">
+  Size of output patches. Required for patch-based tokenization. Can differ from input patch size (e.g., TimesFM uses longer output patches than input).
+</ParamField>
+
+<ParamField path="patch_masking" type="bool or None" default="False">
+  Enables patch masking strategy. Only applicable for patch-based tokenization. Helps models learn to predict well for context lengths that are multiples of input patch length (see TimesFM paper).
+</ParamField>
+
+<ParamField path="number_of_bins" type="int or None" default="4096">
+  Number of quantization bins. Required for bin quantization-based tokenization.
+</ParamField>
+
+<ParamField path="normalization_method" type="str or callable" default="z-norm">
+  Normalization strategy. Accepts custom function that maps a list of numbers to a list of numbers.
+</ParamField>
+
+<ParamField path="normalization_mean" type="float or None" default="None">
+  Mean value for normalization. Should remain `None` for custom normalization methods. For z-norm, computes mean over first patch (patch-based tokenization, following TimesFM) or entire series (bin quantization, following Chronos).
+</ParamField>
+
+<ParamField path="normalization_std" type="float or None" default="None">
+  Standard deviation for normalization. Computes series-wise standard deviation based on first patch (patch-based) or entire series (bin quantization).
+</ParamField>
+
+<Note>
+  The system automatically handles padding, missing values, and end-of-sequence tokens.
+</Note>
+
+## Supported Data Formats and Modalities
+
+<Tabs>
+  <Tab title="Data Formats">
+    - **Text/Code**: JSONL files containing a list of dictionaries, each with a `text` key
+    - **Time Series**: AutoGluonTS compatible formats (format specification coming soon)
+  </Tab>
+  
+  <Tab title="Supported Modalities">
+    - Text
+    - Code  
+    - Time Series (Univariate + Multivariate)
+    
+    <Info>
+      Coming soon: Multimodal (Text + Time Series), Irregularly Sampled Time Series
+    </Info>
+  </Tab>
+</Tabs>
+
+## Example Usage
+
+<CodeGroup>
+```python Text Data
+from pynolano import DataPreparationConfig
+
+def build() -> DataPreparationConfig:
+    return DataPreparationConfig(
+        input_path="./text_data.jsonl",
+        output_path="./prepared_text",
+        tokenization="Qwen/Qwen3-4B",
+        max_sequence_length=2048
+    )
+```
+
+```python Time Series (Patch-based)
+from pynolano import DataPreparationConfig, TimeSeriesTokenizerConfig
+
+def build() -> DataPreparationConfig:
+    return DataPreparationConfig(
+        input_path="./time_series_data",
+        output_path="./prepared_ts",
+        tokenization=TimeSeriesTokenizerConfig(
+            type="patch_based",
+            input_patch_size=32,
+            output_patch_size=32,
+            patch_masking=True,
+            normalization_method="z-norm"
+        )
+    )
+```
+
+```python Time Series (Bin Quantization)
+from pynolano import DataPreparationConfig, TimeSeriesTokenizerConfig
+
+def build() -> DataPreparationConfig:
+    return DataPreparationConfig(
+        input_path="./time_series_data",
+        output_path="./prepared_ts",
+        tokenization=TimeSeriesTokenizerConfig(
+            type="bin_quant_based",
+            number_of_bins=4096,
+            normalization_method="z-norm"
+        )
+    )
+```
+
+```python Custom Tokenization
+def custom_tokenizer(text):
+    # Your custom tokenization logic
+    return tensor_output
+
+def build() -> DataPreparationConfig:
+    return DataPreparationConfig(
+        input_path="./custom_data",
+        output_path="./prepared_custom",
+        tokenization=custom_tokenizer
+    )
+```
+</CodeGroup>

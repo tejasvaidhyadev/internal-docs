@@ -1,0 +1,291 @@
+---
+title: 'Time Series Forecasting'
+description: 'Build powerful forecasting models for time series data'
+---
+
+# Time Series Forecasting
+
+Learn how to build state-of-the-art time series forecasting models using Nolano.AI.
+
+## Overview
+
+Nolano.AI supports both patch-based and bin quantization approaches for time series modeling, compatible with leading research like Chronos, TimesFM, and TiRex.
+
+<Tabs>
+  <Tab title="Patch-Based">
+    Similar to TimesFM and TiRex - treats time series as sequences of patches
+  </Tab>
+  <Tab title="Bin Quantization">
+    Like Amazon Chronos - quantizes values into discrete bins
+  </Tab>
+</Tabs>
+
+## Data Format
+
+Your time series data should follow the AutoGluonTS format:
+
+```json
+{"target": [1.2, 1.5, 1.8, 2.0, 1.9, 1.7], "start": "2023-01-01", "freq": "D"}
+{"target": [2.1, 2.3, 2.5, 2.8, 2.6, 2.4], "start": "2023-01-01", "freq": "D"}
+```
+
+## Patch-Based Approach
+
+### Step 1: Data Preparation
+
+```python data_config_patch.py
+from pynolano import DataPreparationConfig, TimeSeriesTokenizerConfig
+
+def build() -> DataPreparationConfig:
+    return DataPreparationConfig(
+        input_path="./time_series_data.jsonl",
+        output_path="./prepared_ts_patch",
+        tokenization=TimeSeriesTokenizerConfig(
+            type="patch_based",
+            input_patch_size=32,
+            output_patch_size=32,
+            patch_masking=True,
+            normalization_method="z-norm"
+        )
+    )
+```
+
+### Step 2: Training Configuration
+
+```python train_patch.py
+from pynolano import ExperimentConfig, DataConfig, ModelConfig, OptimizationConfig
+
+def build() -> ExperimentConfig:
+    return ExperimentConfig(
+        data_configs=DataConfig(
+            data_paths="./prepared_ts_patch",
+            training_objective="mse",
+            validation_split=0.2
+        ),
+        model_config=ModelConfig(
+            architecture="TimesFM-1B",  # Coming soon
+            init_method="normal"
+        ),
+        optimization_config=OptimizationConfig(
+            total_training_steps=10000,
+            max_learning_rate=1e-4,
+            global_batch_size=64,
+            learning_rate_schedule="cosine",
+            warmup_steps=1000
+        )
+    )
+```
+
+## Bin Quantization Approach
+
+### Step 1: Data Preparation
+
+```python data_config_quant.py
+from pynolano import DataPreparationConfig, TimeSeriesTokenizerConfig
+
+def build() -> DataPreparationConfig:
+    return DataPreparationConfig(
+        input_path="./time_series_data.jsonl", 
+        output_path="./prepared_ts_quant",
+        tokenization=TimeSeriesTokenizerConfig(
+            type="bin_quant_based",
+            number_of_bins=4096,
+            normalization_method="z-norm"
+        ),
+        max_sequence_length=2048
+    )
+```
+
+### Step 2: Training Configuration
+
+```python train_quant.py
+from pynolano import ExperimentConfig, DataConfig, ModelConfig, OptimizationConfig
+
+def build() -> ExperimentConfig:
+    return ExperimentConfig(
+        data_configs=DataConfig(
+            data_paths="./prepared_ts_quant",
+            training_objective="cross_entropy",
+            validation_split=0.2
+        ),
+        model_config=ModelConfig(
+            architecture="Qwen/Qwen3-4B",  # Can use language models
+            init_method="none"
+        ),
+        optimization_config=OptimizationConfig(
+            total_training_steps=8000,
+            max_learning_rate=3e-5,
+            global_batch_size=32,
+            learning_rate_schedule="linear",
+            warmup_steps=800
+        )
+    )
+```
+
+## Training and Evaluation
+
+<Steps>
+  <Step title="Prepare Data">
+    ```bash
+    nolano prepare_data data_config_patch.py  # or data_config_quant.py
+    ```
+  </Step>
+  
+  <Step title="Start Training">
+    ```bash
+    nolano train train_patch.py  # or train_quant.py
+    ```
+  </Step>
+  
+  <Step title="Evaluate Model">
+    ```python eval_ts.py
+    from pynolano import EvaluationConfig, DataConfig
+
+    def build() -> EvaluationConfig:
+        return EvaluationConfig(
+            model_path="./checkpoints/global_step_8000",
+            data_config=DataConfig(
+                data_paths="./test_ts_data",
+                validation_split=1.0
+            ),
+            eval_metrics=["mse", "mae", "mape", "smape"],
+            output_predictions=True
+        )
+    ```
+    
+    ```bash
+    nolano evaluate eval_ts.py
+    ```
+  </Step>
+</Steps>
+
+## Forecasting with Trained Models
+
+### Basic Forecasting
+
+```python
+from pynolano import TimeSeriesForecaster
+
+# Load your trained model
+forecaster = TimeSeriesForecaster(
+    model_path="./checkpoints/global_step_8000",
+    forecast_horizon=24,
+    confidence_intervals=True
+)
+
+# Historical data (last 100 points)
+historical_data = [1.2, 1.5, 1.8, ...]  # Your time series
+
+# Generate 24-step ahead forecast
+forecasts = forecaster.predict(
+    historical_data=historical_data,
+    prediction_length=24
+)
+
+print(f"Forecasts: {forecasts['mean']}")
+print(f"Lower bound: {forecasts['lower']}")
+print(f"Upper bound: {forecasts['upper']}")
+```
+
+### Batch Forecasting
+
+```python
+from pynolano import BatchInference
+
+# For multiple time series
+batch_forecaster = BatchInference(
+    model_path="./checkpoints/global_step_8000",
+    input_path="./forecast_data.jsonl",
+    output_path="./forecasts/",
+    batch_size=32
+)
+
+batch_forecaster.run()
+```
+
+## Advanced Features
+
+<AccordionGroup>
+  <Accordion title="Multivariate Time Series">
+    Handle multiple related time series:
+    
+    ```json
+    {
+      "target": [[1.2, 2.1], [1.5, 2.3], [1.8, 2.5]], 
+      "start": "2023-01-01", 
+      "freq": "D"
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="External Features">
+    Include external variables (holidays, weather, etc.):
+    
+    ```python
+    DataConfig(
+        data_paths="./ts_data",
+        features=["holiday_feature", "weather_feature"]
+    )
+    ```
+  </Accordion>
+
+  <Accordion title="Quantile Forecasting">
+    Probabilistic forecasting with quantile loss:
+    
+    ```python
+    DataConfig(
+        training_objective="quantile"
+    )
+    ```
+  </Accordion>
+
+  <Accordion title="Multi-Horizon Training">
+    Train for multiple forecast horizons:
+    
+    ```python
+    DataConfig(
+        training_objective="multi_task"
+    )
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Model Selection Guide
+
+<CardGroup cols={2}>
+  <Card 
+    title="Patch-Based" 
+    icon="grid"
+    color="#935095"
+  >
+    **Best for:**
+    - Long sequences
+    - Smooth time series
+    - When you have domain knowledge about seasonality
+    
+    **Models:** TimesFM, TiRex-style architectures
+  </Card>
+  
+  <Card 
+    title="Bin Quantization" 
+    icon="chart-bar"
+    color="#B47BB6"
+  >
+    **Best for:**
+    - Noisy data
+    - Irregular patterns
+    - When you want to leverage language model pretraining
+    
+    **Models:** Chronos, language model-based
+  </Card>
+</CardGroup>
+
+## Performance Tips
+
+<Tip>
+  **Patch Size Selection**: For patch-based models, choose patch size based on your data's seasonality. Daily data might use patches of 7 (weekly patterns) or 30 (monthly patterns).
+</Tip>
+
+<Warning>
+  **Memory Usage**: Longer sequences and larger patch sizes require more GPU memory. Start small and scale up based on your hardware.
+</Warning>

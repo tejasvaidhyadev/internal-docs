@@ -1,0 +1,283 @@
+---
+title: 'Evaluation & Inference'
+description: 'Comprehensive model evaluation and inference tools'
+---
+
+## Evaluation & Inference
+
+The evaluation system in Nolano.AI provides comprehensive tools for assessing model performance across different modalities and tasks. The platform supports both built-in evaluation metrics and custom evaluation functions.
+
+### EvaluationConfig
+
+Configuration class for model evaluation and inference settings.
+
+<ParamField path="model_path" type="str" required>
+  Path to the trained model checkpoint directory (e.g., `/path/to/checkpoint/global_step_XXXXX`)
+</ParamField>
+
+<ParamField path="data_config" type="DataConfig" required>
+  Configuration for evaluation data. Similar to training data config but typically with `validation_split=1.0`
+</ParamField>
+
+<ParamField path="eval_metrics" type="str, List[str], or callable" default="Auto-selected based on training objective">
+  Evaluation metrics to compute:
+  - **Text/code models**: `"perplexity"`, `"accuracy"`, `"bleu"`, `"rouge"`
+  - **Time series**: `"mse"`, `"mae"`, `"mape"`, `"smape"`, `"quantile_loss"`
+  - **Custom callable** functions with signature: `(predictions, targets) → metric_value`
+</ParamField>
+
+<ParamField path="batch_size" type="int" default="32">
+  Batch size for evaluation.
+</ParamField>
+
+<ParamField path="output_predictions" type="bool" default="False">
+  Whether to save predictions to file.
+</ParamField>
+
+<ParamField path="output_path" type="str or None" default="model_path + '/evaluation'">
+  Directory to save evaluation results and predictions.
+</ParamField>
+
+<ParamField path="eval_steps" type="int or None" default="None">
+  Maximum number of evaluation steps. Set to `None` for full dataset evaluation.
+</ParamField>
+
+### Built-in Evaluation Metrics
+
+<Tabs>
+  <Tab title="Text/Code Modality">
+    - `Perplexity`: Measures how well the model predicts the next token  
+    - `Accuracy`: Token-level or sequence-level accuracy  
+    - `BLEU`: Bilingual Evaluation Understudy score for text generation quality  
+    - `ROUGE`: Recall-Oriented Understudy for Gisting Evaluation  
+    - `CodeBLEU`: Specialized BLEU variant for code generation
+  </Tab>
+  
+  <Tab title="Time Series Modality">
+    - `MSE`: Mean Squared Error  
+    - `MAE`: Mean Absolute Error  
+    - `MAPE`: Mean Absolute Percentage Error  
+    - `sMAPE`: Symmetric Mean Absolute Percentage Error  
+    - `Quantile Loss`: For probabilistic forecasting models  
+    - `CRPS`: Continuous Ranked Probability Score
+  </Tab>
+</Tabs>
+
+### Evaluation Examples
+
+<CodeGroup>
+```python Text Model Evaluation
+# eval_config.py
+from pynolano import EvaluationConfig, DataConfig
+
+def build() -> EvaluationConfig:
+    return EvaluationConfig(
+        model_path="./checkpoints/global_step_1000",
+        data_config=DataConfig(
+            data_paths="./test_data",
+            validation_split=1.0  # Use all data for evaluation
+        ),
+        eval_metrics=["perplexity", "accuracy", "bleu"],
+        output_predictions=True,
+        batch_size=16
+    )
+```
+
+```python Time Series Forecasting Evaluation
+# forecast_eval_config.py
+from pynolano import EvaluationConfig, DataConfig
+
+def build() -> EvaluationConfig:
+    return EvaluationConfig(
+        model_path="./ts_model/global_step_5000",
+        data_config=DataConfig(
+            data_paths="./test_series",
+            validation_split=1.0
+        ),
+        eval_metrics=["mse", "mae", "mape", "quantile_loss"],
+        output_predictions=True,
+        output_path="./evaluation_results"
+    )
+```
+
+```python Custom Evaluation Metrics
+def custom_accuracy(predictions, targets):
+    """Custom accuracy metric with specific threshold"""
+    correct = torch.abs(predictions - targets) < 0.1
+    return correct.float().mean().item()
+
+def build() -> EvaluationConfig:
+    return EvaluationConfig(
+        model_path="./model_checkpoint",
+        data_config=DataConfig(data_paths="./eval_data", validation_split=1.0),
+        eval_metrics=[custom_accuracy, "mse"],
+        batch_size=32
+    )
+```
+</CodeGroup>
+
+### Running Evaluation
+
+<CodeGroup>
+```bash Configuration File
+# Run evaluation with configuration file
+nolano evaluate eval_config.py
+```
+
+```bash Command Line
+# Quick evaluation with command line arguments
+nolano evaluate --model_path ./checkpoints/global_step_1000 --data_path ./test_data --metrics perplexity accuracy
+```
+
+```bash Custom Output
+# Evaluation with specific output directory
+nolano evaluate eval_config.py --output_path ./custom_eval_results
+```
+</CodeGroup>
+
+## Inference
+
+### InferenceConfig
+
+Configuration class for model inference settings.
+
+<ParamField path="batch_size" type="int" default="1">
+  Batch size for inference.
+</ParamField>
+
+<ParamField path="max_new_tokens" type="int" default="512">
+  Maximum number of new tokens to generate (for generative models).
+</ParamField>
+
+<ParamField path="temperature" type="float" default="1.0">
+  Sampling temperature for text generation. Higher values increase randomness.
+</ParamField>
+
+<ParamField path="top_p" type="float" default="1.0">
+  Nucleus sampling parameter. Only consider tokens with cumulative probability up to this value.
+</ParamField>
+
+<ParamField path="top_k" type="int or None" default="None">
+  Only consider the k most likely tokens at each step.
+</ParamField>
+
+<ParamField path="do_sample" type="bool" default="True">
+  Whether to use sampling for generation. If False, uses greedy decoding.
+</ParamField>
+
+<ParamField path="repetition_penalty" type="float" default="1.0">
+  Penalty for token repetition. Values > 1.0 discourage repetition.
+</ParamField>
+
+<ParamField path="length_penalty" type="float" default="1.0">
+  Penalty for sequence length. Values > 1.0 encourage longer sequences.
+</ParamField>
+
+<ParamField path="device" type="str" default="auto">
+  Device for inference ('cuda', 'cpu', 'auto').
+</ParamField>
+
+### Inference Examples
+
+<CodeGroup>
+```python Basic Inference
+from pynolano import load_model, InferenceConfig
+
+# Load trained model
+model = load_model("./checkpoints/global_step_1000")
+
+# Configure inference
+inference_config = InferenceConfig(
+    batch_size=1,
+    max_new_tokens=512,  # For generative models
+    temperature=0.7,     # For text generation
+    top_p=0.9,
+    do_sample=True
+)
+
+# Run inference
+results = model.generate(
+    inputs=["Your input text here"],
+    config=inference_config
+)
+```
+
+```python Batch Inference
+# For large-scale inference
+from pynolano import BatchInference
+
+batch_inference = BatchInference(
+    model_path="./checkpoints/global_step_1000",
+    input_path="./inference_data",
+    output_path="./inference_results",
+    batch_size=32,
+    device="cuda"
+)
+
+# Process all data
+batch_inference.run()
+```
+
+```python Time Series Forecasting
+# Specialized inference for time series forecasting
+from pynolano import TimeSeriesForecaster
+
+forecaster = TimeSeriesForecaster(
+    model_path="./ts_model/global_step_5000",
+    forecast_horizon=24,  # Number of steps to predict
+    confidence_intervals=True
+)
+
+# Generate forecasts
+forecasts = forecaster.predict(
+    historical_data=your_time_series_data,
+    prediction_length=24
+)
+```
+</CodeGroup>
+
+### Evaluation Output
+
+Evaluation results are saved in JSON format with the following structure:
+
+```json
+{
+    "model_info": {
+        "model_path": "./checkpoints/global_step_1000",
+        "model_config": {...},
+        "evaluation_timestamp": "2024-01-15T10:30:00Z"
+    },
+    "dataset_info": {
+        "num_samples": 10000,
+        "data_paths": ["./test_data"],
+        "preprocessing_config": {...}
+    },
+    "metrics": {
+        "perplexity": 3.24,
+        "accuracy": 0.876,
+        "bleu": 0.445,
+        "loss": 1.175
+    },
+    "detailed_results": {
+        "per_sample_metrics": [...],
+        "confidence_intervals": {...}
+    }
+}
+```
+
+### Integration with Experiment Tracking
+
+<CodeGroup>
+```python Experiment Tracking
+# Automatic logging to experiment tracking
+from pynolano import ExperimentTracker
+
+tracker = ExperimentTracker("my_experiment")
+eval_results = nolano.evaluate(eval_config)
+tracker.log_evaluation(eval_results)
+```
+</CodeGroup>
+
+<Info>
+  This comprehensive evaluation system enables thorough assessment of model performance and supports iterative improvement of your foundation models.
+</Info>
