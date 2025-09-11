@@ -11,9 +11,15 @@ This tutorial walks you through training a text model from start to finish using
 
 <Steps>
   <Step title="Install Nolano.AI">
-    ```bash
-    pip install pynolano
-    ```
+    Contact the Nolano team to receive the installation package and setup instructions:
+
+    <Card title="Request Self-Hosted Access" icon="envelope" color="#935095">
+      Email [hello@nolano.ai](mailto:hello@nolano.ai) with:
+      - Your research institution/organization
+      - Intended use case and research goals
+      - Hardware specifications and cluster details
+      - Timeline for your project
+    </Card>
   </Step>
   
   <Step title="Prepare Your Data">
@@ -202,35 +208,3 @@ print(results[0])
   </Accordion>
 </AccordionGroup>
 
-## Best Practices
-
-<CardGroup cols={2}>
-  <Card 
-    title="Learning Rate" 
-    icon="chart-line"
-    color="#935095"
-  >
-    Start with 2e-5 for fine-tuning, 3e-4 for training from scratch
-  </Card>
-  <Card 
-    title="Batch Size" 
-    icon="layers"
-    color="#B47BB6"
-  >
-    Use largest batch size that fits in memory (16-64 typically works well)
-  </Card>
-  <Card 
-    title="Sequence Length" 
-    icon="ruler"
-    color="#6F3A71"
-  >
-    Match your data's typical length; longer sequences need more memory
-  </Card>
-  <Card 
-    title="Validation" 
-    icon="check-circle"
-    color="#935095"
-  >
-    Always reserve 10-20% of data for validation
-  </Card>
-</CardGroup>

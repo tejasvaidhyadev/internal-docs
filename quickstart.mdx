@@ -7,6 +7,10 @@ description: 'Start building foundation models in minutes'
 
 Get your first foundation model training in under an hour with these simple steps.
 
+<Note>
+  **Two Ways to Work with Nolano.AI**: This guide shows both the **Python SDK** (`pynolano`) for creating configuration files and the **CLI** (`nolano`) for executing operations. Both work together seamlessly - you write configs with the SDK and run them with the CLI.
+</Note>
+
 <Steps>
   <Step title="Prepare Your Data">
     Nolano.AI handles all data preprocessing with a single command. Here's a minimal config example for text data:
@@ -16,7 +20,7 @@ Get your first foundation model training in under an hour with these simple step
 
     def build() -> DataPreparationConfig:
         return DataPreparationConfig(
-            input_path = "./raw_data", # Can also be a callable function
+            input_path = "./raw_data", # Can also be a readable  stream
             output_path = "./prepared_data",
             tokenization = "Qwen/Qwen3-4B",
         )

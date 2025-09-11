@@ -72,24 +72,25 @@ config = ModelConfig(
 
 <Tabs>
   <Tab title="Dense Models">
-    - **LLaMA**: LLaMA 2, Code Llama
-    - **Qwen**: Qwen 1.5, Qwen 2
-    - **Gemma**: Gemma 2B, 7B
-    - **Mistral**: Mistral 7B
+    - **LLaMA Series** 
+    - **Qwen Series**
+    - **Gemma Series**  
   </Tab>
   
   <Tab title="Mixture of Experts (MoE)">
-    - **Qwen MoE**: Qwen1.5-MoE-A2.7B
-    - **DeepSeek**: DeepSeek MoE models
-    - **Mixtral**: Mixtral 8x7B
+    - **Qwen MoE**  
+    - **DeepSeek**
+    - **Mixtral** 
   </Tab>
   
-  <Tab title="Time Series (Coming Soon)">
+  <Tab title="Time Series">
     - **TSFM**: Time Series Foundation Models
     - **Chronos**: Amazon Chronos models
     - **TimesFM**: Google TimesFM
   </Tab>
 </Tabs>
+
+you can request custom architecture if needed
 
 <Warning>
   When using `init_method="none"`, you must provide a valid `model_path`. The model path should point to a compatible pre-trained model or checkpoint.

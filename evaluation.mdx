@@ -265,18 +265,6 @@ Evaluation results are saved in JSON format with the following structure:
 }
 ```
 
-### Integration with Experiment Tracking
-
-<CodeGroup>
-```python Experiment Tracking
-# Automatic logging to experiment tracking
-from pynolano import ExperimentTracker
-
-tracker = ExperimentTracker("my_experiment")
-eval_results = nolano.evaluate(eval_config)
-tracker.log_evaluation(eval_results)
-```
-</CodeGroup>
 
 <Info>
   This comprehensive evaluation system enables thorough assessment of model performance and supports iterative improvement of your foundation models.

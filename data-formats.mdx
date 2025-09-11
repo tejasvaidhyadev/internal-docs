@@ -3,7 +3,7 @@ title: 'Data Formats'
 description: 'Supported data formats for different modalities in Nolano.AI'
 ---
 
-# Data Formats
+# Formats
 
 Nolano.AI supports specific data formats for different modalities to ensure seamless processing and training. Understanding these formats is crucial for preparing your data correctly.
 
@@ -21,22 +21,6 @@ For language models and code generation, Nolano.AI uses **JSONL (JSON Lines)** f
 {"text": "SELECT customer_id, COUNT(*) as order_count FROM orders WHERE order_date >= '2023-01-01' GROUP BY customer_id"}
 ```
 
-### Key Requirements
-
-<CardGroup cols={2}>
-  <Card title="JSON Validation" icon="check">
-    Each line must be valid JSON syntax
-  </Card>
-  <Card title="Text Field" icon="text">
-    Each object must contain a `text` field with string content
-  </Card>
-  <Card title="Content Types" icon="code">
-    Text can contain code, natural language, or mixed content
-  </Card>
-  <Card title="Encoding" icon="globe">
-    Supports any text encoding (UTF-8 recommended)
-  </Card>
-</CardGroup>
 
 ### Best Practices
 
@@ -125,25 +109,6 @@ Time series data follows the **AutoGluonTS** format, where each line contains a 
   </Card>
 </CardGroup>
 
-## File Organization
-
-### Recommended Structure
-
-```
-data/
-├── training/        # Training dataset
-│   ├── text_data.jsonl
-│   ├── text_data2.jsonl
-│   └── ...          # more training files
-├── validation/      # Validation dataset
-│   ├── text_data.jsonl
-│   ├── text_data2.jsonl
-│   └── ...          # more validation files
-└── test/            # Test dataset
-    ├── text_data.jsonl
-    ├── text_data2.jsonl
-    └── ...          # more test files
-```
 
 
 <Note>

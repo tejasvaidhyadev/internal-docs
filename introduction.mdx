@@ -75,15 +75,53 @@ Our platform eliminates the boilerplate parts of foundation model research so yo
 
 <AccordionGroup>
   <Accordion title="Tokenization Support">
-    - Supports all Hugging Face tokenizers
     - Custom tokenizers for text & time series
-    - Flexible tokenization strategies
+    - BPE, WordPiece, SentencePiece implementations
   </Accordion>
 
   <Accordion title="Architecture Support">
     - Major dense and MoE architectures
-    - LLaMA, Qwen, DeepSeek
-    - Custom architecture definitions
+    - LLaMA, Qwen, DeepSeek, Mistral, Phi
+  </Accordion>
+
+  <Accordion title="Distributed Training">
+    - Multi-node, multi-GPU training out of the box
+    - Data parallelism, model parallelism, and pipeline parallelism
+    - Gradient accumulation and mixed precision training
+    - Automatic sharding and load balancing
+  </Accordion>
+
+  <Accordion title="Data Pipeline">
+    - High-performance data loading and preprocessing
+    - Memory-efficient streaming for large datasets
+    - Built-in data validation and quality checks
+    - Automatic data shuffling and batching
+  </Accordion>
+
+  <Accordion title="Training Optimization">
+    - Adaptive learning rate scheduling
+    - Gradient clipping and stability monitoring
+    - Memory optimization techniques
+    - Dynamic loss scaling for mixed precision
+  </Accordion>
+
+  <Accordion title="Evaluation & Monitoring">
+    - Real-time training metrics and visualization
+    - Comprehensive model evaluation suites
+    - Custom evaluation metrics support
+    - Tensorboard and Weights & Biases integration
+  </Accordion>
+
+  <Accordion title="Model Management">
+    - Automatic checkpointing and versioning
+    - Integration with Huggingface
+  </Accordion>
+
+  <Accordion title="Scalability & Performance">
+    - Dynamic scaling based on workload
+    - Optimized for cloud and on-premise deployments
+    - GPU memory optimization and efficient utilization
+    - Support for various hardware accelerators (A100, H100, V100)
   </Accordion>
 </AccordionGroup>
 

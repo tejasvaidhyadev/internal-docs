@@ -278,44 +278,6 @@ def build() -> FinetuningConfig:
 ```
 </CodeGroup>
 
-## Finetuning Best Practices
-
-### Learning Rate Selection
-
-<Tip>
-  Start with learning rates 5-10x lower than full training. For most models:
-  - **Full finetuning**: 1e-5 to 5e-4
-  - **LoRA finetuning**: 1e-4 to 1e-3
-  - **Classification tasks**: 1e-5 to 1e-4
-</Tip>
-
-### Data Requirements
-
-<Warning>
-  Finetuning requires high-quality, task-specific data. Generally:
-  - **Minimum**: 100-500 examples per task
-  - **Recommended**: 1,000-10,000 examples
-  - **Quality over quantity**: Clean, representative data is more important than volume
-</Warning>
-
-### Training Duration
-
-<Info>
-  Finetuning converges much faster than full training:
-  - **Quick adaptation**: 500-1,000 steps
-  - **Complex tasks**: 2,000-5,000 steps
-  - **Domain transfer**: 3,000-10,000 steps
-  
-  Monitor validation metrics to avoid overfitting.
-</Info>
-
-### Parameter-Efficient Methods
-
-| Method | Memory | Training Speed | Performance | Use Case |
-|--------|---------|---------------|-------------|-----------|
-| **Full Finetuning** | High | Slow | Best | High-resource scenarios |
-| **LoRA** | Low | Fast | Good | Most scenarios |
-| **Frozen Layers** | Medium | Medium | Good | Domain adaptation |
 
 ## Advanced Features
 
