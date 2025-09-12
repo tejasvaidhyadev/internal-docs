@@ -33,6 +33,19 @@ Configuration for model architecture and initialization.
   Whether to load optimizer state from checkpoint. Set to `True` for continual training from checkpoint.
 </ParamField>
 
+<ParamField path="precision" type="str" default="fp16">
+  Model precision configuration:
+  - `"binary"`: Binary precision (1-bit)
+  - `"ternary"`: Ternary precision (1.58-bit)
+  - `"int2"`: 2-bit integer precision
+  - `"fp8"`: 8-bit floating point
+  - `"mxfp4"`: 4-bit microscaling floating point
+  - `"mxfp6"`: 6-bit microscaling floating point
+  - `"ue8m0"`: 8-bit unsigned integer with 0 exponent bits
+  - `"fp16"`: 16-bit floating point (default)
+  - `"fp32"`: 32-bit floating point
+</ParamField>
+
 ## Example Configurations
 
 <CodeGroup>
@@ -43,7 +56,8 @@ config = ModelConfig(
     architecture="Qwen/Qwen3-4B",
     init_method="none",
     model_path="./pretrained_model",
-    load_optimizer=False
+    load_optimizer=False,
+    precision="fp16"
 )
 ```
 
@@ -52,7 +66,8 @@ from pynolano import ModelConfig
 
 config = ModelConfig(
     architecture="Qwen/Qwen3-4B",
-    init_method="normal"
+    init_method="normal",
+    precision="fp16"
 )
 ```
 
@@ -63,7 +78,18 @@ config = ModelConfig(
     architecture="Qwen/Qwen3-4B",
     init_method="none",
     model_path="./checkpoint/global_step_1000",
-    load_optimizer=True
+    load_optimizer=True,
+    precision="fp16"
+)
+```
+
+```python Low Precision Training
+from pynolano import ModelConfig
+
+config = ModelConfig(
+    architecture="Qwen/Qwen3-4B",
+    init_method="normal",
+    precision="ternary"
 )
 ```
 </CodeGroup>
