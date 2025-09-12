@@ -15,6 +15,10 @@ Get your first foundation model training in under an hour with these simple step
   <Step title="Prepare Your Data">
     Nolano.AI handles all data preprocessing with a single command. Here's a minimal config example for text data:
 
+    <Note>
+      **Data Formats**: Make sure your data follows the supported [data formats](/data-formats) for your specific modality.
+    </Note>
+
     ```python data_config.py
     from pynolano import DataPreparationConfig
 
@@ -56,9 +60,7 @@ Get your first foundation model training in under an hour with these simple step
     ```bash
     nolano train train_config.py
     ```
-  </Step>
 
-  <Step title="Automatic Features">
     That's it! Your model is now training with automatic:
 
     <CardGroup cols={2}>
