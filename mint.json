@@ -71,7 +71,7 @@
       "pages": [
         "tutorials/text-models",
         "tutorials/time-series",
-        "tutorials/custom-tokenizers"
+        "tutorials/text-and-time-series"
       ]
     },
     {

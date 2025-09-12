@@ -1,0 +1,215 @@
+---
+title: 'Joint Text and Time Series Training'
+description: 'Build unified models that understand both natural language and temporal patterns through joint multi-modal training'
+---
+
+This advanced tutorial demonstrates building unified foundation models that can understand both natural language and temporal patterns simultaneously. We'll train a single model from scratch using the Mistral-7B-Instruct architecture, jointly optimizing on text generation and time series forecasting tasks.
+
+## What You'll Learn
+
+In this tutorial, we'll cover:
+- **Multi-modal architecture design** using Mistral-7B for unified text and time series processing
+- **Custom time series tokenization** with log normalization and spike handling
+- **Joint training strategies** with equal task weighting and shared representations
+- **Advanced lag feature engineering** for improved temporal modeling
+- **Cross-domain knowledge transfer** between language and time series domains
+
+You'll need one text data and one time series data ready in the required format.
+
+## Step 1: Data Preparation Configurations
+
+### Understanding Time Series Tokenization Challenges
+
+Time series data presents unique challenges that require specialized handling:
+
+- **Extreme Values**: Time series often contain outliers or spikes that can destabilize model training
+- **Multi-Scale Patterns**: Underlying patterns exist across different orders of magnitude  
+- **Gradient Stability**: Raw values can cause gradient explosion during training
+
+### Custom Tokenizer for Spike Handling
+
+We'll create a customized tokenizer that addresses these challenges through log normalization and spike clipping:
+
+```python customize_tokenizer.py
+import numpy as np
+
+def log_spike_normalization(time_series):
+    """Normalize time series with spike handling via log transformation."""
+    ts_array = np.array(time_series, dtype=np.float32)
+    
+    # Ensure all values are positive for log transformation
+    min_val = np.min(ts_array)
+    if min_val < 1:
+        ts_array = ts_array + (1 - min_val)
+    
+    # Apply log transformation and clip extreme values
+    ts_log = np.log(ts_array)
+    return np.clip(ts_log, a_min=None, a_max=20.0).tolist()
+```
+
+Now we'll create separate data preparation configurations for text and time series data:
+
+### Text Data Preparation
+
+```python text_data_config.py
+from pynolano import DataPreparationConfig
+
+def build() -> DataPreparationConfig:
+    return DataPreparationConfig(
+        input_path="./text_training_data.jsonl",
+        output_path="./prepared_text_data",
+        tokenization="mistralai/Mistral-7B-Instruct-v0.1",  # Use same tokenizer as model
+        max_sequence_length=4096
+    )
+```
+
+### Time Series Data Preparation
+
+```python ts_data_config.py
+from pynolano import DataPreparationConfig, TimeSeriesTokenizerConfig
+from customize_tokenizer import log_spike_normalization
+
+def build() -> DataPreparationConfig:
+    return DataPreparationConfig(
+        input_path="./time_series_data.jsonl",
+        output_path="./prepared_ts_data",
+        tokenization=TimeSeriesTokenizerConfig(
+            type="chronos",  # Use Chronos tokenizer as specified
+            normalization_method=log_spike_normalization,  # Custom normalization function
+        ),
+        max_sequence_length=2048
+    )
+```
+
+### Run Data Preparation
+
+Prepare both datasets:
+
+```bash
+# Prepare text data
+nolano prepare_data text_data_config.py
+
+# Prepare time series data  
+nolano prepare_data ts_data_config.py
+```
+
+## Step 2: Joint Training Configuration
+
+Configure the model for joint training on both text and time series with equal weighting:
+
+```python joint_train_config.py
+from pynolano import (
+    ExperimentConfig, 
+    DataConfig, 
+    ModelConfig, 
+    OptimizationConfig,
+    MetaConfig
+)
+
+def build() -> ExperimentConfig:
+    return ExperimentConfig(
+        # Dual-modal data configuration with equal sampling weights
+        data_configs=[
+            DataConfig(
+                data_paths="./prepared_text_data",
+                training_objective="cross_entropy",  # Standard language modeling objective
+                sampling_weight=0.5,  # Equal weight - 50% of training data
+            ),
+            DataConfig(
+                data_paths="./prepared_ts_data", 
+                training_objective="cross_entropy",  # Cross entropy for time series tokens
+                sampling_weight=0.5,  # Equal weight - 50% of training data
+                features=["lag_features"]
+            )
+        ],
+        model_config=ModelConfig(
+            architecture="mistralai/Mistral-7B-Instruct-v0.1",
+            init_method="xavier_uniform",  # Xavier random initialization from scratch
+            # The platform will automatically adapt the architecture for multi-modal inputs
+        ),
+        optimization_config=OptimizationConfig(
+            total_training_steps=30000,
+            max_learning_rate=2e-4,  # Balanced learning rate for joint training
+            global_batch_size=64,
+            learning_rate_schedule="cosine",
+            warmup_steps=3000,
+            weight_decay=0.01,
+            gradient_clipping=1.0  # Important for stability in multi-modal training
+        ),
+        meta_config=MetaConfig(
+            name="joint-text-timeseries-mistral-7b",
+            model_save_frequency=3000,
+            max_checkpoints=5,
+            seed=42
+        )
+    )
+```
+
+Start the multi-modal training process:
+
+```bash
+nolano train joint_train_config.py
+```
+
+The platform will automatically:
+- Initialize a Mistral-7B model from scratch with Xavier initialization
+- Adapt the architecture to handle both text tokens and time series tokens
+- Apply the custom time series tokenizer with log normalization during training
+- Generate and utilize lag features for improved temporal modeling
+- Balance training between text and time series tasks with equal weighting
+
+## Advanced Multi-Modal Features
+
+This tutorial demonstrates several cutting-edge capabilities:
+
+<AccordionGroup>
+  <Accordion title="Joint Architecture Adaptation">
+    **Unified Model for Dual Modalities**
+    
+    The Mistral-7B architecture is automatically adapted for joint training:
+    - Shared transformer layers process both text and time series tokens
+    - Modality-specific input/output heads handle domain differences
+    - Cross-attention mechanisms enable knowledge transfer between modalities
+    - Joint embedding space captures relationships across domains
+  </Accordion>
+
+  <Accordion title="Custom Time Series Tokenization">
+    **Advanced Spike-Aware Normalization**
+    
+    Our log-based normalization strategy provides:
+    - Robust handling of extreme values and outliers (spikes)
+    - Logarithmic scaling preserves relative relationships
+    - Clipping at 20 prevents gradient instability from extreme values
+    - Offset ensures all values are positive before log transformation
+  </Accordion>
+  
+  <Accordion title="Automatic Lag Feature Engineering">
+    **Intelligent Temporal Feature Generation**
+    
+    The platform automatically creates relevant lag features:
+    - Adaptive lag selection based on detected patterns
+    - Seasonal lag features for periodic data
+    - Rolling statistics for trend analysis
+    - Cross-correlation features between different lag periods
+  </Accordion>
+
+  <Accordion title="Equal Task Weighting Strategy">
+    **Balanced Multi-Modal Learning**
+    
+    The 50/50 weighting approach ensures:
+    - Neither modality dominates the learning process
+    - Shared representations benefit both tasks equally
+    - Gradient balance prevents mode collapse
+    - Consistent performance improvements across both domains
+  </Accordion>
+
+  <Accordion title="Cross-Domain Knowledge Transfer">
+    **Synergistic Learning Benefits**
+    
+    Joint training provides unique advantages:
+    - Language understanding improves pattern recognition in time series
+    - Temporal reasoning enhances sequential text processing
+    - Shared attention mechanisms capture long-range dependencies
+    - Common representation space enables zero-shot cross-domain transfer
+  </Accordion>
+</AccordionGroup>
