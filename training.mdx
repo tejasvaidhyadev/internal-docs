@@ -49,6 +49,62 @@ Configuration for experiment metadata and checkpointing behavior.
   Maximum number of model checkpoints to retain. Set to -1 for no limit.
 </ParamField>
 
+<ParamField path="wandb_config" type="WandbConfig or None" default="None">
+  Weights & Biases logging configuration for experiment tracking and visualization
+</ParamField>
+
+### WandbConfig
+
+Configuration for Weights & Biases experiment tracking and logging.
+
+<ParamField path="project" type="str" required>
+  Weights & Biases project name for organizing experiments
+</ParamField>
+
+<ParamField path="entity" type="str or None" default="None">
+  Weights & Biases team/organization name. If None, uses the default entity associated with your API key.
+</ParamField>
+
+<ParamField path="run_name" type="str or None" default="None">
+  Custom run name for the experiment. If None, uses the MetaConfig name or auto-generates one.
+</ParamField>
+
+<ParamField path="tags" type="List[str] or None" default="None">
+  List of tags to associate with the run for easy filtering and organization
+</ParamField>
+
+<ParamField path="notes" type="str or None" default="None">
+  Optional notes or description for the experiment run
+</ParamField>
+
+<ParamField path="log_model" type="bool" default="False">
+  Whether to log the model as a Weights & Biases artifact for version control
+</ParamField>
+
+<ParamField path="log_frequency" type="int" default="100">
+  Frequency (in steps) for logging metrics to Weights & Biases
+</ParamField>
+
+<ParamField path="log_gradients" type="bool" default="False">
+  Whether to log gradient histograms (can impact performance)
+</ParamField>
+
+<ParamField path="log_parameters" type="bool" default="False">
+  Whether to log parameter histograms (can impact performance)
+</ParamField>
+
+<ParamField path="watch_model" type="str or None" default="None">
+  Model watching mode for logging gradients and parameters:
+  - `"gradients"`: Log gradient histograms
+  - `"parameters"`: Log parameter histograms
+  - `"all"`: Log both gradients and parameters
+  - `None`: Disable model watching
+</ParamField>
+
+<ParamField path="config" type="dict or None" default="None">
+  Additional configuration dictionary to log to Weights & Biases
+</ParamField>
+
 ### DataConfig
 
 Configuration for training data and objectives. Can be specified as a single instance or list for multi-task learning.
@@ -163,7 +219,7 @@ def build() -> ExperimentConfig:
 ```
 
 ```python Advanced Training
-from pynolano import ExperimentConfig, DataConfig, ModelConfig, OptimizationConfig, MetaConfig
+from pynolano import ExperimentConfig, DataConfig, ModelConfig, OptimizationConfig, MetaConfig, WandbConfig
 
 def build() -> ExperimentConfig:
     return ExperimentConfig(
@@ -196,7 +252,13 @@ def build() -> ExperimentConfig:
             name="multi-task-experiment",
             seed=42,
             model_save_frequency=1000,
-            max_checkpoints=5
+            max_checkpoints=5,
+            wandb_config=WandbConfig(
+                project="nolano-training",
+                tags=["multi-task", "experiment"],
+                log_model=True,
+                log_frequency=50
+            )
         )
     )
 ```

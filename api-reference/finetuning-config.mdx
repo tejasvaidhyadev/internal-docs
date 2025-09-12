@@ -169,3 +169,63 @@ Configuration for experiment metadata and checkpointing behavior.
 <ParamField path="max_checkpoints" type="int" default="-1">
   Maximum number of model checkpoints to retain. Set to -1 for no limit.
 </ParamField>
+
+<ParamField path="wandb_config" type="WandbConfig | None" default="None">
+  Weights & Biases logging configuration for finetuning experiment tracking and visualization.
+</ParamField>
+
+## WandbConfig
+
+Configuration for Weights & Biases experiment tracking and logging during finetuning.
+
+<ParamField path="project" type="str" required>
+  Weights & Biases project name for organizing finetuning experiments.
+</ParamField>
+
+<ParamField path="entity" type="str | None" default="None">
+  Weights & Biases team/organization name. If None, uses the default entity associated with your API key.
+</ParamField>
+
+<ParamField path="run_name" type="str | None" default="None">
+  Custom run name for the finetuning experiment. If None, uses the MetaConfig name or auto-generates one.
+</ParamField>
+
+<ParamField path="tags" type="List[str] | None" default="None">
+  List of tags to associate with the finetuning run for easy filtering and organization.
+</ParamField>
+
+<ParamField path="notes" type="str | None" default="None">
+  Optional notes or description for the finetuning experiment run.
+</ParamField>
+
+<ParamField path="log_model" type="bool" default="True">
+  Whether to log the finetuned model as a Weights & Biases artifact for version control. Defaults to True for finetuning.
+</ParamField>
+
+<ParamField path="log_frequency" type="int" default="50">
+  Frequency (in steps) for logging metrics to Weights & Biases. Lower default for finetuning due to fewer total steps.
+</ParamField>
+
+<ParamField path="log_gradients" type="bool" default="False">
+  Whether to log gradient histograms (can impact performance).
+</ParamField>
+
+<ParamField path="log_parameters" type="bool" default="False">
+  Whether to log parameter histograms (can impact performance).
+</ParamField>
+
+<ParamField path="watch_model" type="str | None" default="None">
+  Model watching mode for logging gradients and parameters:
+  - `"gradients"`: Log gradient histograms
+  - `"parameters"`: Log parameter histograms
+  - `"all"`: Log both gradients and parameters
+  - `None`: Disable model watching
+</ParamField>
+
+<ParamField path="config" type="dict | None" default="None">
+  Additional configuration dictionary to log to Weights & Biases.
+</ParamField>
+
+<ParamField path="log_lora_weights" type="bool" default="True">
+  Whether to log LoRA adapter weights as artifacts when using LoRA finetuning.
+</ParamField>
