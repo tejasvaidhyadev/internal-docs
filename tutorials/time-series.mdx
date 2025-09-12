@@ -1,291 +1,220 @@
 ---
-title: 'Time Series Forecasting'
-description: 'Build powerful forecasting models for time series data'
+title: 'Time Series Forecasting Foundation Models'
+description: 'Build powerful time series forecasting foundation models using cross-modal continual pretraining from language models'
 ---
 
-# Time Series Forecasting
+# Building Time Series Forecasting Foundation Models
 
-Learn how to build state-of-the-art time series forecasting models using Nolano.AI.
+This comprehensive tutorial demonstrates building state-of-the-art time series forecasting foundation models through cross-modal continual pretraining. We'll start with a pretrained language model (Gemma-3-4B) and adapt it for time series forecasting using advanced patch-based tokenization and a custom research multi-objective optimization with MAE and Quantile Loss with 20 quantiles.
 
-## Overview
+## What You'll Learn
 
-Nolano.AI supports both patch-based and bin quantization approaches for time series modeling, compatible with leading research like Chronos, TimesFM, and TiRex.
+In this tutorial, we'll cover:
+- **Cross-modal continual pretraining** from language models to time series
+- **Patch-based time series tokenization** with masking for robust learning
+- **Custom multi-objective loss functions** combining MAE and pinball loss
+- **Advanced forecasting techniques** using foundation model approaches
+- **Production-ready model deployment** for time series prediction
 
-<Tabs>
-  <Tab title="Patch-Based">
-    Similar to TimesFM and TiRex - treats time series as sequences of patches
-  </Tab>
-  <Tab title="Bin Quantization">
-    Like Amazon Chronos - quantizes values into discrete bins
-  </Tab>
-</Tabs>
+## Step 1: Data Preparation
 
-## Data Format
+Your time series data should be in JSONL format following the AutoGluonTS format. Each line should contain a dictionary with the following structure:
 
-Your time series data should follow the AutoGluonTS format:
+We'll use patch-based tokenization to convert time series into sequences that can be processed by transformer architectures, enabling transfer from language models.
 
-```json
-{"target": [1.2, 1.5, 1.8, 2.0, 1.9, 1.7], "start": "2023-01-01", "freq": "D"}
-{"target": [2.1, 2.3, 2.5, 2.8, 2.6, 2.4], "start": "2023-01-01", "freq": "D"}
-```
-
-## Patch-Based Approach
-
-### Step 1: Data Preparation
-
-```python data_config_patch.py
+```python data_config.py
 from pynolano import DataPreparationConfig, TimeSeriesTokenizerConfig
 
 def build() -> DataPreparationConfig:
     return DataPreparationConfig(
         input_path="./time_series_data.jsonl",
-        output_path="./prepared_ts_patch",
+        output_path="./prepared_ts_foundation",
         tokenization=TimeSeriesTokenizerConfig(
             type="patch_based",
-            input_patch_size=32,
-            output_patch_size=32,
-            patch_masking=True,
-            normalization_method="z-norm"
-        )
+            input_patch_size=32,     # Input patches of 32 time steps
+            output_patch_size=128,   # Predict patches of 128 time steps 
+            patch_masking=True,      # Enable patch masking for robust learning
+            normalization_method="z-norm"  # Standardize values
+        ),
+        max_sequence_length=2048  # Maximum sequence length for efficient training
     )
 ```
 
-### Step 2: Training Configuration
+**Run Data Preparation**
 
-```python train_patch.py
-from pynolano import ExperimentConfig, DataConfig, ModelConfig, OptimizationConfig
+```bash
+nolano prepare_data data_config.py
+```
+
+## Step 2: Custom Loss Function Implementation
+
+Our custom loss function combines Mean Absolute Error (MAE) with Pinball Loss for quantile forecasting. While MAE is well-known, let's focus on the key component:
+
+### Pinball Loss (Quantile Loss)
+
+Pinball loss enables probabilistic forecasting by predicting multiple quantiles with asymmetric penalties:
+
+$$
+\text{Pinball}(\tau) = \frac{1}{n} \sum_{i=1}^{n} \max\left(\tau(y_i - \hat{y}_i^\tau), (\tau-1)(y_i - \hat{y}_i^\tau)\right)
+$$
+
+Where:
+- $\tau$ is the quantile level (e.g., 0.1 for 10th percentile)  
+- $\hat{y}_i^\tau$ is the predicted value for quantile $\tau$
+- The loss penalizes under-prediction more for high quantiles, over-prediction more for low quantiles
+
+### Custom Multi-Objective Loss Function
+
+Create a custom multi-objective loss function that combines MAE and pinball loss for comprehensive forecasting:
+
+```python custom_loss.py
+import torch
+import torch.nn as nn
+
+def multi_objective_forecasting_loss(logits, targets):
+    """
+    Custom multi-objective loss combining MAE (70%) and Pinball loss (30%)
+    
+    Args:
+        logits: Model predictions of shape (..., sequence_length, output_patch_size)
+        targets: Ground truth values of shape (..., sequence_length, output_patch_size)
+    
+    Returns:
+        loss: Single scalar loss value
+    """
+    # Flatten the last two dimensions for easier computation
+    # Shape: (..., sequence_length * output_patch_size)
+    logits_flat = logits.view(*logits.shape[:-2], -1)
+    targets_flat = targets.view(*targets.shape[:-2], -1)
+    
+    # 1. Mean Absolute Error (MAE) - 70% weight
+    mae_loss = torch.mean(torch.abs(logits_flat - targets_flat))
+    
+    # 2. Pinball Loss for 20 quantiles - 30% weight
+    quantiles = torch.linspace(0.05, 0.95, 20, device=logits.device)  # 20 quantiles from 5% to 95%
+    pinball_losses = []
+    
+    for tau in quantiles:
+        # For pinball loss, we interpret predictions as quantile estimates
+        # This is a simplified approach - in practice, you might have separate heads for each quantile
+        errors = targets_flat - logits_flat
+        pinball_loss = torch.where(
+            errors >= 0,
+            tau * errors,
+            (tau - 1) * errors
+        )
+        pinball_losses.append(torch.mean(pinball_loss))
+    
+    # Average pinball loss across all quantiles
+    avg_pinball_loss = torch.stack(pinball_losses).mean()
+    
+    # Combine losses with specified weights
+    total_loss = 0.7 * mae_loss + 0.3 * avg_pinball_loss
+    
+    return total_loss
+```
+
+## Step 3: Training Configuration
+
+Configure the model for cross-modal continual pretraining from Gemma-3-4B to time series forecasting:
+
+```python train_config.py
+from pynolano import (
+    ExperimentConfig, 
+    DataConfig, 
+    ModelConfig, 
+    OptimizationConfig,
+    MetaConfig
+)
+from custom_loss import multi_objective_forecasting_loss
 
 def build() -> ExperimentConfig:
     return ExperimentConfig(
-        data_configs=DataConfig(
-            data_paths="./prepared_ts_patch",
-            training_objective="mse",
-            validation_split=0.2
-        ),
+        data_configs=[
+            DataConfig(
+                data_paths="./prepared_ts_foundation",
+                training_objective=multi_objective_forecasting_loss,  # Custom loss function
+                validation_split=0.15
+            )
+        ],
         model_config=ModelConfig(
-            architecture="TimesFM-1B",  # Coming soon
-            init_method="normal"
+            architecture="google/gemma-3-4b-pt",  # Pretrained Gemma model
+            init_method="none",  # Don't reinitialize weights - use pretrained
+            # Cross-modal adaptation will be handled automatically
         ),
         optimization_config=OptimizationConfig(
-            total_training_steps=10000,
-            max_learning_rate=1e-4,
+            total_training_steps=25000,
+            max_learning_rate=5e-5,  # Lower learning rate for continual pretraining
             global_batch_size=64,
             learning_rate_schedule="cosine",
-            warmup_steps=1000
+            warmup_steps=2500,
+            weight_decay=0.01,
+            gradient_clipping=1.0  # Important for stability in cross-modal training
+        ),
+        meta_config=MetaConfig(
+            name="ts-foundation-gemma-4b",
+            model_save_frequency=2500,
+            max_checkpoints=5,
+            seed=42
         )
     )
 ```
 
-## Bin Quantization Approach
+Launch the training process:
 
-### Step 1: Data Preparation
-
-```python data_config_quant.py
-from pynolano import DataPreparationConfig, TimeSeriesTokenizerConfig
-
-def build() -> DataPreparationConfig:
-    return DataPreparationConfig(
-        input_path="./time_series_data.jsonl", 
-        output_path="./prepared_ts_quant",
-        tokenization=TimeSeriesTokenizerConfig(
-            type="bin_quant_based",
-            number_of_bins=4096,
-            normalization_method="z-norm"
-        ),
-        max_sequence_length=2048
-    )
+```bash
+nolano train train_config.py
 ```
 
-### Step 2: Training Configuration
+The platform will automatically:
+- Adapt the Gemma-3-4B architecture for time series processing
+- Apply patch-based tokenization during training
+- Optimize using the custom multi-objective loss function
+- Scale across multiple GPUs for efficient training
 
-```python train_quant.py
-from pynolano import ExperimentConfig, DataConfig, ModelConfig, OptimizationConfig
+## Advanced Foundation Model Features
 
-def build() -> ExperimentConfig:
-    return ExperimentConfig(
-        data_configs=DataConfig(
-            data_paths="./prepared_ts_quant",
-            training_objective="cross_entropy",
-            validation_split=0.2
-        ),
-        model_config=ModelConfig(
-            architecture="Qwen/Qwen3-4B",  # Can use language models
-            init_method="none"
-        ),
-        optimization_config=OptimizationConfig(
-            total_training_steps=8000,
-            max_learning_rate=3e-5,
-            global_batch_size=32,
-            learning_rate_schedule="linear",
-            warmup_steps=800
-        )
-    )
-```
-
-## Training and Evaluation
-
-<Steps>
-  <Step title="Prepare Data">
-    ```bash
-    nolano prepare_data data_config_patch.py  # or data_config_quant.py
-    ```
-  </Step>
-  
-  <Step title="Start Training">
-    ```bash
-    nolano train train_patch.py  # or train_quant.py
-    ```
-  </Step>
-  
-  <Step title="Evaluate Model">
-    ```python eval_ts.py
-    from pynolano import EvaluationConfig, DataConfig
-
-    def build() -> EvaluationConfig:
-        return EvaluationConfig(
-            model_path="./checkpoints/global_step_8000",
-            data_config=DataConfig(
-                data_paths="./test_ts_data",
-                validation_split=1.0
-            ),
-            eval_metrics=["mse", "mae", "mape", "smape"],
-            output_predictions=True
-        )
-    ```
-    
-    ```bash
-    nolano evaluate eval_ts.py
-    ```
-  </Step>
-</Steps>
-
-## Forecasting with Trained Models
-
-### Basic Forecasting
-
-```python
-from pynolano import TimeSeriesForecaster
-
-# Load your trained model
-forecaster = TimeSeriesForecaster(
-    model_path="./checkpoints/global_step_8000",
-    forecast_horizon=24,
-    confidence_intervals=True
-)
-
-# Historical data (last 100 points)
-historical_data = [1.2, 1.5, 1.8, ...]  # Your time series
-
-# Generate 24-step ahead forecast
-forecasts = forecaster.predict(
-    historical_data=historical_data,
-    prediction_length=24
-)
-
-print(f"Forecasts: {forecasts['mean']}")
-print(f"Lower bound: {forecasts['lower']}")
-print(f"Upper bound: {forecasts['upper']}")
-```
-
-### Batch Forecasting
-
-```python
-from pynolano import BatchInference
-
-# For multiple time series
-batch_forecaster = BatchInference(
-    model_path="./checkpoints/global_step_8000",
-    input_path="./forecast_data.jsonl",
-    output_path="./forecasts/",
-    batch_size=32
-)
-
-batch_forecaster.run()
-```
-
-## Advanced Features
+The tutorial showcases several cutting-edge capabilities:
 
 <AccordionGroup>
-  <Accordion title="Multivariate Time Series">
-    Handle multiple related time series:
+  <Accordion title="Cross-Modal Continual Pretraining">
+    **Language-to-Time Series Transfer Learning**
     
-    ```json
-    {
-      "target": [[1.2, 2.1], [1.5, 2.3], [1.8, 2.5]], 
-      "start": "2023-01-01", 
-      "freq": "D"
-    }
-    ```
+    Our approach leverages pretrained language models for time series:
+    - Preserves rich representational knowledge from language pretraining
+    - Adapts transformer architectures to temporal patterns
+    - Enables few-shot learning on new time series domains
+    - Significantly reduces training time compared to training from scratch
   </Accordion>
 
-  <Accordion title="External Features">
-    Include external variables (holidays, weather, etc.):
+  <Accordion title="Patch-Based Tokenization">
+    **Advanced Time Series Representation**
     
-    ```python
-    DataConfig(
-        data_paths="./ts_data",
-        features=["holiday_feature", "weather_feature"]
-    )
-    ```
+    The patch-based approach treats time series like sequences:
+    - Input patches of 32 time steps for context understanding
+    - Output patches of 128 time steps for multi-step forecasting
+    - Patch masking during training improves robustness
+    - Enables efficient processing of long time series
+  </Accordion>
+  
+  <Accordion title="Multi-Objective Loss Optimization">
+    **Sophisticated Loss Function Design**
+    
+    Our custom loss combines multiple objectives:
+    - 70% MAE weight for robust point forecasting
+    - 30% pinball loss weight for uncertainty quantification
+    - 20 quantiles (vs. standard 10) for detailed probabilistic forecasting
+    - Asymmetric penalty structure for realistic cost modeling
   </Accordion>
 
-  <Accordion title="Quantile Forecasting">
-    Probabilistic forecasting with quantile loss:
+  <Accordion title="Foundation Model Benefits">
+    **Scalable and Transferable Architecture**
     
-    ```python
-    DataConfig(
-        training_objective="quantile"
-    )
-    ```
-  </Accordion>
-
-  <Accordion title="Multi-Horizon Training">
-    Train for multiple forecast horizons:
-    
-    ```python
-    DataConfig(
-        training_objective="multi_task"
-    )
-    ```
+    The foundation model approach provides:
+    - Zero-shot forecasting on new time series
+    - Few-shot adaptation to domain-specific patterns
+    - Robust performance across diverse time series types
+    - Efficient fine-tuning for specialized applications
   </Accordion>
 </AccordionGroup>
 
-## Model Selection Guide
-
-<CardGroup cols={2}>
-  <Card 
-    title="Patch-Based" 
-    icon="grid"
-    color="#935095"
-  >
-    **Best for:**
-    - Long sequences
-    - Smooth time series
-    - When you have domain knowledge about seasonality
-    
-    **Models:** TimesFM, TiRex-style architectures
-  </Card>
-  
-  <Card 
-    title="Bin Quantization" 
-    icon="chart-bar"
-    color="#B47BB6"
-  >
-    **Best for:**
-    - Noisy data
-    - Irregular patterns
-    - When you want to leverage language model pretraining
-    
-    **Models:** Chronos, language model-based
-  </Card>
-</CardGroup>
-
-## Performance Tips
-
-<Tip>
-  **Patch Size Selection**: For patch-based models, choose patch size based on your data's seasonality. Daily data might use patches of 7 (weekly patterns) or 30 (monthly patterns).
-</Tip>
-
-<Warning>
-  **Memory Usage**: Longer sequences and larger patch sizes require more GPU memory. Start small and scale up based on your hardware.
-</Warning>
