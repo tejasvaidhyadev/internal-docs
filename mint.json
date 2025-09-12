@@ -46,6 +46,7 @@
   "navigation": [
     {
       "group": "Get Started",
+      "icon": "rocket",
       "pages": [
         "introduction",
         "quickstart"
@@ -53,6 +54,7 @@
     },
     {
       "group": "Core Concepts",
+      "icon": "cube",
       "pages": [
         "installation-setup",
         "data-formats",
@@ -65,6 +67,7 @@
     },
     {
       "group": "Tutorials",
+      "icon": "book-open",
       "pages": [
         "tutorials/text-models",
         "tutorials/time-series",
@@ -73,6 +76,7 @@
     },
     {
       "group": "API Reference",
+      "icon": "code",
       "pages": [
         "api-reference/data-config",
         "api-reference/model-config",
