@@ -81,6 +81,7 @@
         "api-reference/data-config",
         "api-reference/model-config",
         "api-reference/optimization-config",
+        "api-reference/training-config",
         "api-reference/finetuning-config",
         "api-reference/evaluation-config"
       ]

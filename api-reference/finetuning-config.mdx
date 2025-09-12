@@ -145,3 +145,27 @@ description: "API reference for finetuning configuration"
 <ParamField path="features" type="str | List[str] | callable | List[callable] | None" default="None">
   Feature engineering functions for specialized finetuning tasks.
 </ParamField>
+
+## MetaConfig
+
+Configuration for experiment metadata and checkpointing behavior.
+
+<ParamField path="name" type="str" default="trial-run">
+  Name identifier for this finetuning experimental run.
+</ParamField>
+
+<ParamField path="seed" type="int" default="42">
+  Random seed for reproducible finetuning.
+</ParamField>
+
+<ParamField path="save_path" type="str" default="current working directory / run_name">
+  Directory path for saving finetuned model checkpoints.
+</ParamField>
+
+<ParamField path="model_save_frequency" type="int" default="-1">
+  Frequency (in steps) for saving model checkpoints. Set to -1 to save only at the end of finetuning.
+</ParamField>
+
+<ParamField path="max_checkpoints" type="int" default="-1">
+  Maximum number of model checkpoints to retain. Set to -1 for no limit.
+</ParamField>
