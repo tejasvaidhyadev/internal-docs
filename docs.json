@@ -1,0 +1,106 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Nolano.AI",
+  "colors": {
+    "primary": "#935095",
+    "light": "#B47BB6",
+    "dark": "#6F3A71"
+  },
+  "favicon": "/logos/favicon-light.png",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "icon": "rocket",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "icon": "cube",
+            "pages": [
+              "installation-setup",
+              "data-formats",
+              "data-preparation",
+              "model-configuration",
+              "training",
+              "finetuning",
+              "evaluation"
+            ]
+          },
+          {
+            "group": "Tutorials",
+            "icon": "book-open",
+            "pages": [
+              "tutorials/text-models",
+              "tutorials/time-series",
+              "tutorials/text-and-time-series"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "API Reference",
+            "icon": "code",
+            "pages": [
+              "api-reference/data-config",
+              "api-reference/model-config",
+              "api-reference/optimization-config",
+              "api-reference/training-config",
+              "api-reference/finetuning-config",
+              "api-reference/evaluation-config"
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Website",
+          "href": "https://nolano.ai",
+          "icon": "globe"
+        },
+        {
+          "anchor": "GitHub",
+          "href": "https://github.com/nolanoorg",
+          "icon": "github"
+        }
+      ]
+    }
+  },
+  "logo": {
+    "light": "/logos/logo_docs_light.png",
+    "dark": "/logos/logo_docs_dark.png"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "mailto:hello@nolano.ai"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get Started",
+      "href": "https://nolano.ai"
+    }
+  },
+  "footer": {
+    "socials": {
+      "twitter": "https://twitter.com/NolanoOrg",
+      "github": "https://github.com/NolanoOrg",
+      "linkedin": "https://www.linkedin.com/company/nolanohq?trk=organization_guest_main-feed-card_feed-actor-name"
+    }
+  },
+  "hidePoweredBy": true
+}

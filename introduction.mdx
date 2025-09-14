@@ -16,7 +16,7 @@ description: 'Automated Platform for Building Large Foundation Models'
   />
 </Frame>
 
-# Nolano AI — Automated Platform for Building Large Foundation Models
+# Nolano AI: An Automated Platform for Developing Large-Scale Foundation Models
 
 <Note>
   **For AI/ML Researchers** at the frontier of foundation modeling research.
@@ -29,47 +29,48 @@ We allow AI researchers to focus on what matters most: **breakthrough innovation
 
 Our platform eliminates the boilerplate parts of foundation model research so you can focus on pushing the frontier:
 
-<CardGroup cols={2}>
-  <Card
-    title="Engineering Setup"
-    icon="wrench"
-    color="#935095"
-  >
-    Months of engineering setup for distributed training across clusters
-  </Card>
-  <Card
-    title="HPC Expertise" 
-    icon="microchip"
-    color="#B47BB6"
-  >
-    Deep expertise in HPC, CUDA, parallelization strategies, and hardware optimization
-  </Card>
-  <Card
-    title="Data Pipelines"
-    icon="database"
-    color="#6F3A71"
-  >
-    Redundant implementation of data loaders, training loops, and evaluation pipelines
-  </Card>
-  <Card
-    title="Configuration Management"
-    icon="gear"
-    color="#935095"
-  >
-    Complex configuration management across different experiments and modalities
-  </Card>
-</CardGroup>
+<AccordionGroup>
+  <Accordion title="🔧 Engineering Setup" icon="wrench">
+    Months of engineering setup for distributed training across clusters - we handle the infrastructure complexity so you can focus on model innovation.
+  </Accordion>
+  
+  <Accordion title="🖥️ HPC Expertise" icon="microchip">
+    Deep expertise in HPC, CUDA, parallelization strategies, and hardware optimization - no need to become a systems expert to train foundation models.
+  </Accordion>
+  
+  <Accordion title="🗄️ Data Pipelines" icon="database">
+    Redundant implementation of data loaders, training loops, and evaluation pipelines - our battle-tested pipelines handle petabyte-scale datasets efficiently.
+  </Accordion>
+  
+  <Accordion title="⚙️ Configuration Management" icon="gear">
+    Complex configuration management across different experiments and modalities - simplified configuration with intelligent defaults and validation.
+  </Accordion>
+</AccordionGroup>
 
 ## Supported Modalities
 
-<Tabs>
-  <Tab title="Language & Code">
+<CardGroup cols={2}>
+  <Card
+    title="Language & Code"
+    icon="code"
+    color="#935095"
+    href="/tutorials/text-models"
+  >
     Build state-of-the-art language and code models with support for all major architectures.
-  </Tab>
-  <Tab title="Time Series">
+    
+    See tutorial
+  </Card>
+  <Card
+    title="Time Series"
+    icon="chart-line"
+    color="#B47BB6"
+    href="/tutorials/time-series"
+  >
     Create powerful forecasting models for both univariate and multivariate time series data.
-  </Tab>
-</Tabs>
+    
+    See tutorial
+  </Card>
+</CardGroup>
 
 ### Key Features
 
@@ -80,13 +81,13 @@ Our platform eliminates the boilerplate parts of foundation model research so yo
   </Accordion>
 
   <Accordion title="Architecture Support">
-    - Major dense and MoE architectures
-    - LLaMA, Qwen, DeepSeek, Mistral, Phi
+    - Supports major dense (Encoder/Decoder) and Mixture-of-Experts architectures
+    - Qwen, DeepSeek, Chronos, and TimeMoE
   </Accordion>
 
   <Accordion title="Distributed Training">
     - Multi-node, multi-GPU training out of the box
-    - Data parallelism, model parallelism, and pipeline parallelism
+    - Data, model, and pipeline parallelism
     - Gradient accumulation and mixed precision training
     - Automatic sharding and load balancing
   </Accordion>
@@ -94,7 +95,6 @@ Our platform eliminates the boilerplate parts of foundation model research so yo
   <Accordion title="Data Pipeline">
     - High-performance data loading and preprocessing
     - Memory-efficient streaming for large datasets
-    - Built-in data validation and quality checks
     - Automatic data shuffling and batching
   </Accordion>
 
@@ -106,10 +106,9 @@ Our platform eliminates the boilerplate parts of foundation model research so yo
   </Accordion>
 
   <Accordion title="Evaluation & Monitoring">
-    - Real-time training metrics and visualization
-    - Comprehensive model evaluation suites
     - Custom evaluation metrics support
-    - Tensorboard and Weights & Biases integration
+    - Real-time training metrics and visualization
+    - Supports Weights & Biases integration
   </Accordion>
 
   <Accordion title="Model Management">
@@ -120,8 +119,6 @@ Our platform eliminates the boilerplate parts of foundation model research so yo
   <Accordion title="Scalability & Performance">
     - Dynamic scaling based on workload
     - Optimized for cloud and on-premise deployments
-    - GPU memory optimization and efficient utilization
-    - Support for various hardware accelerators (A100, H100, V100)
   </Accordion>
 </AccordionGroup>
 
@@ -132,7 +129,6 @@ Our platform eliminates the boilerplate parts of foundation model research so yo
     title="Zero-to-training in under an hour"
     icon="rocket"
     color="#935095"
-    href="/quickstart"
   >
     Start your first experiment immediately with our streamlined workflow
   </Card>
@@ -140,7 +136,6 @@ Our platform eliminates the boilerplate parts of foundation model research so yo
     title="One-command operations"
     icon="terminal"
     color="#B47BB6"
-    href="/quickstart"
   >
     Data preparation, training, evaluation and inference with simple CLI commands
   </Card>
@@ -148,7 +143,6 @@ Our platform eliminates the boilerplate parts of foundation model research so yo
     title="Built-in best practices"
     icon="star"
     color="#6F3A71"
-    href="/training"
   >
     Scalable distributed training, hyperparameter transfer and automated optimization
   </Card>
@@ -156,7 +150,6 @@ Our platform eliminates the boilerplate parts of foundation model research so yo
     title="Production-ready"
     icon="check"
     color="#935095"
-    href="/evaluation"
   >
     Models ready for deployment without additional engineering overhead
   </Card>
@@ -168,4 +161,4 @@ Our platform eliminates the boilerplate parts of foundation model research so yo
 
 ---
 
-*Nolano.AI — Democratizing Foundation Model Research*
+*Nolano AI: Democratizing Foundation Model Research*
