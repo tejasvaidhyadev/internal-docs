@@ -64,17 +64,44 @@ Get your first foundation model training in under an hour with these simple step
     That's it! Your model is now training with automatic:
 
     <CardGroup cols={2}>
-      <Card title="Distributed Training" icon="server" color="#935095">
+      <Card 
+        title="Distributed Training" 
+        icon="server" 
+        color="#935095"
+      >
         Data parallelism across available GPUs
+        
+        → More details coming soon
       </Card>
-      <Card title="Mixed Precision" icon="gauge" color="#B47BB6">
+      <Card 
+        title="Mixed Precision" 
+        icon="gauge" 
+        color="#B47BB6"
+        href="/api-reference/model-config#modelconfig"
+      >
         Optimal performance with mixed precision training
+        
+        → See precision parameter
       </Card>
-      <Card title="Checkpointing" icon="floppy-disk" color="#6F3A71">
+      <Card 
+        title="Checkpointing" 
+        icon="floppy-disk" 
+        color="#6F3A71"
+        href="/api-reference/training-config#metaconfig"
+      >
         Checkpoint saving every epoch
+        
+        → See MetaConfig parameters
       </Card>
-      <Card title="Metrics Logging" icon="chart-line" color="#935095">
+      <Card 
+        title="Metrics Logging" 
+        icon="chart-line" 
+        color="#935095"
+        href="/api-reference/training-config#wandbconfig"
+      >
         Real-time metrics logging
+        
+        → See WandbConfig parameters
       </Card>
     </CardGroup>
   </Step>
